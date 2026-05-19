@@ -30,11 +30,22 @@ app.get('/api/health', (_req, res) => res.json({ status: 'ok', time: new Date().
 const PORT = process.env.PORT || 5000;
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/exeat_management';
 
-mongoose.connect(MONGODB_URI, {
-  serverSelectionTimeoutMS: 30000,
-  socketTimeoutMS: 45000,
-  family: 4
-})
+const connectDB = async () => {
+  try {
+    await mongoose.connect(MONGODB_URI, {
+      serverSelectionTimeoutMS: 30000,
+      socketTimeoutMS: 45000,
+      family: 4
+    });
+
+    console.log('MongoDB connected successfully');
+  } catch (error) {
+    console.error('MongoDB connection failed:', error);
+    process.exit(1);
+  }
+};
+
+connectDB()
   .then(() => {
     console.log('✅ MongoDB connected:', MONGODB_URI);
     app.listen(PORT, () => console.log(`🚀 Server running on http://localhost:${PORT}`));
