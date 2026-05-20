@@ -3,6 +3,8 @@ const express = require('express');
 const cors = require('cors');
 const mongoose = require('mongoose');
 const path = require('path');
+const dns = require('dns');
+dns.setDefaultResultOrder('ipv4first');
 
 const authRoutes = require('./routes/auth');
 const requestRoutes = require('./routes/requests');
@@ -10,47 +12,40 @@ const auditRoutes = require('./routes/audit');
 
 const app = express();
 
-// ── Middleware ────────────────────────────────────────────────────────────
-app.use(cors({ origin: 'http://localhost:5173', credentials: true }));
+// ── Middleware ─────────────────────────────────────────────────────────────
+app.use(cors({ origin: '*', credentials: true }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-
-// Serve uploaded files
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
-// ── Routes ────────────────────────────────────────────────────────────────
+// ── Routes ─────────────────────────────────────────────────────────────────
 app.use('/api/auth', authRoutes);
 app.use('/api/requests', requestRoutes);
 app.use('/api/audit', auditRoutes);
-
-// Health check
 app.get('/api/health', (_req, res) => res.json({ status: 'ok', time: new Date().toISOString() }));
 
-// ── Database & Start ──────────────────────────────────────────────────────
+// ── Database & Start ───────────────────────────────────────────────────────
 const PORT = process.env.PORT || 5000;
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/exeat_management';
+const MONGODB_URI = process.env.MONGODB_URI;
 
-const connectDB = async () => {
-  try {
-    await mongoose.connect(MONGODB_URI, {
-      serverSelectionTimeoutMS: 30000,
-      socketTimeoutMS: 45000,
-      family: 4
-    });
+console.log('PORT:', PORT);
+console.log('MONGODB_URI exists:', !!MONGODB_URI);
 
-    console.log('MongoDB connected successfully');
-  } catch (error) {
-    console.error('MongoDB connection failed:', error);
-    process.exit(1);
-  }
-};
+if (!MONGODB_URI) {
+  console.error('❌ MONGODB_URI is not set!');
+  process.exit(1);
+}
 
-connectDB()
-  .then(() => {
-    console.log('✅ MongoDB connected:', MONGODB_URI);
-    app.listen(PORT, () => console.log(`🚀 Server running on http://localhost:${PORT}`));
-  })
-  .catch(err => {
-    console.error('❌ MongoDB connection failed:', err.message);
-    process.exit(1);
-  });
+mongoose.connect(MONGODB_URI, {
+  serverSelectionTimeoutMS: 30000,
+  socketTimeoutMS: 45000,
+  family: 4
+})
+.then(() => {
+  console.log('✅ MongoDB connected successfully');
+  app.listen(PORT, () => console.log(`🚀 Server running on http://localhost:${PORT}`));
+})
+.catch(err => {
+  console.error('❌ MongoDB connection failed:', err.message);
+  process.exit(1);
+});
