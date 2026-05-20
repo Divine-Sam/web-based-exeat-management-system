@@ -1,4 +1,4 @@
-const BASE = 'http://localhost:5000/api';
+const BASE = 'https://web-based-exeat-management-system-1.onrender.com/api';
 
 function getToken(): string | null {
   return localStorage.getItem('exeat_token');
