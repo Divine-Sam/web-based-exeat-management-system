@@ -26,6 +26,9 @@ export interface ExeatRequest {
   destination: string;
   reason_description: string;
   reason_category: ReasonCategory;
+  parent_name: string;           
+  parent_phone: string;          
+  relationship: string;  
   supporting_document_path: string | null;
   supporting_document_name: string | null;
   departure_date: string;
@@ -41,6 +44,7 @@ export interface ExeatRequest {
   updated_at: string;
   profiles?: Profile;
 }
+
 
 export interface AuditLog {
   id: string;

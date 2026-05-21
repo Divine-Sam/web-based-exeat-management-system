@@ -11,6 +11,9 @@ export async function createRequest(
     reason_category: string;
     departure_date: string;
     return_date: string;
+    parent_name: string;          
+    parent_phone: string;         
+    parent_relationship: string;  
     file?: File;
   }
 ): Promise<ExeatRequest> {
@@ -20,9 +23,13 @@ export async function createRequest(
   form.append('reason_category', data.reason_category);
   form.append('departure_date', data.departure_date);
   form.append('return_date', data.return_date);
+  form.append('parent_name', data.parent_name);           // ← add
+  form.append('parent_phone', data.parent_phone);         // ← add
+  form.append('parent_relationship', data.parent_relationship); // ← add
   if (data.file) form.append('document', data.file);
   return api.postForm<ExeatRequest>('/requests', form);
 }
+
 
 export async function updateRequest(
   requestId: string,

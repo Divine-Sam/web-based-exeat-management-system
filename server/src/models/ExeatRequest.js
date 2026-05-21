@@ -1,5 +1,3 @@
-const mongoose = require('mongoose');
-
 const exeatRequestSchema = new mongoose.Schema({
   student_id: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
   destination: { type: String, required: true, trim: true },
@@ -9,6 +7,11 @@ const exeatRequestSchema = new mongoose.Schema({
     enum: ['Medical', 'Family Emergency', 'Official', 'Personal', 'Academic'],
     required: true,
   },
+  // ── Parent Contact ──────────────────────────────
+  parent_name: { type: String, required: true, trim: true },
+  parent_phone: { type: String, required: true, trim: true },
+  parent_relationship: { type: String, required: true, trim: true },
+  // ─────────────────────────────────────────────────
   supporting_document_path: { type: String, default: null },
   supporting_document_name: { type: String, default: null },
   departure_date: { type: String, required: true },
@@ -33,5 +36,3 @@ const exeatRequestSchema = new mongoose.Schema({
   checkout_time: { type: Date, default: null },
   checkin_time: { type: Date, default: null },
 }, { timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' } });
-
-module.exports = mongoose.model('ExeatRequest', exeatRequestSchema);
