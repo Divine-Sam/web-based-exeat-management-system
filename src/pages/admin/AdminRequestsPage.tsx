@@ -18,8 +18,7 @@ const STATUS_FILTERS: { value: '' | RequestStatus; label: string }[] = [
   { value: 'APPROVED_FINAL', label: 'Approved' },
   { value: 'REJECTED_BY_HALL_ADMIN', label: 'Rejected (Hall)' },
   { value: 'REJECTED_BY_DEAN', label: 'Rejected (Dean)' },
-  { value: 'CHECKED_OUT', label: 'Checked Out' },
-  { value: 'CHECKED_IN', label: 'Checked In' },
+  
 ];
 
 export function AdminRequestsPage() {
