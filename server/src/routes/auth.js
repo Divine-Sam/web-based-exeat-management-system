@@ -103,7 +103,7 @@ router.put('/change-password', protect, async (req, res) => {
       return res.status(400).json({ message: 'Current password is incorrect.' });
     }
 
-    user.password = new_password;
+   user.password = new_password;
     await user.save();
 
     res.json({ message: 'Password changed successfully.' });
