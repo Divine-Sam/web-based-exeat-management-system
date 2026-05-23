@@ -28,7 +28,7 @@ export interface ExeatRequest {
   reason_category: ReasonCategory;
   parent_name: string;           
   parent_phone: string;          
-  relationship: string;  
+  parent_relationship: string;   
   supporting_document_path: string | null;
   supporting_document_name: string | null;
   departure_date: string;

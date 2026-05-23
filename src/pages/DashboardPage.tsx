@@ -15,20 +15,39 @@ interface StatCard {
   icon: React.ReactNode;
   color: string;
   bg: string;
+  to?: string;
 }
 
 function StatCardItem({ card }: { card: StatCard }) {
+  const content = (
+    <div className="flex items-start justify-between">
+      <div>
+        <p className="text-sm text-slate-500 font-medium">{card.label}</p>
+        <p className={`text-3xl font-bold mt-1 ${card.color}`}>{card.value}</p>
+      </div>
+      <div className={`w-11 h-11 rounded-xl ${card.bg} flex items-center justify-center`}>
+        {card.icon}
+      </div>
+    </div>
+  );
+
+  if (card.to) {
+    return (
+      <Link
+        to={card.to}
+        className="bg-white rounded-2xl p-5 border border-slate-100 shadow-sm hover:shadow-md hover:border-blue-200 hover:scale-[1.02] transition-all cursor-pointer block"
+      >
+        {content}
+        <p className="text-xs text-slate-400 mt-3 flex items-center gap-1">
+          View requests <ArrowRight className="w-3 h-3" />
+        </p>
+      </Link>
+    );
+  }
+
   return (
     <div className="bg-white rounded-2xl p-5 border border-slate-100 shadow-sm hover:shadow-md transition-shadow">
-      <div className="flex items-start justify-between">
-        <div>
-          <p className="text-sm text-slate-500 font-medium">{card.label}</p>
-          <p className={`text-3xl font-bold mt-1 ${card.color}`}>{card.value}</p>
-        </div>
-        <div className={`w-11 h-11 rounded-xl ${card.bg} flex items-center justify-center`}>
-          {card.icon}
-        </div>
-      </div>
+      {content}
     </div>
   );
 }
@@ -69,6 +88,7 @@ export function DashboardPage() {
   return (
     <DashboardLayout>
       <div className="space-y-6">
+
         {/* Welcome banner */}
         <div className="bg-gradient-to-r from-blue-600 to-blue-700 rounded-2xl p-6 text-white shadow-lg shadow-blue-100">
           <h2 className="text-xl font-bold">Welcome back, {user?.profile.full_name.split(' ')[0]}</h2>
@@ -80,14 +100,42 @@ export function DashboardPage() {
           </p>
         </div>
 
-        {/* Student stats */}
+        {/* ── Student stats ─────────────────────────────── */}
         {role === 'student' && (
           <>
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-              <StatCardItem card={{ label: 'Total This Session', value: stats.total as number, icon: <FileText className="w-5 h-5 text-blue-600" />, color: 'text-blue-600', bg: 'bg-blue-50' }} />
-              <StatCardItem card={{ label: 'Pending Review', value: stats.pending as number, icon: <Clock className="w-5 h-5 text-amber-600" />, color: 'text-amber-600', bg: 'bg-amber-50' }} />
-              <StatCardItem card={{ label: 'Approved', value: stats.approved as number, icon: <CheckCircle className="w-5 h-5 text-emerald-600" />, color: 'text-emerald-600', bg: 'bg-emerald-50' }} />
-              <StatCardItem card={{ label: 'Rejected', value: stats.rejected as number, icon: <XCircle className="w-5 h-5 text-red-500" />, color: 'text-red-500', bg: 'bg-red-50' }} />
+              <StatCardItem card={{
+                label: 'Total This Session',
+                value: stats.total as number,
+                icon: <FileText className="w-5 h-5 text-blue-600" />,
+                color: 'text-blue-600',
+                bg: 'bg-blue-50',
+                to: '/requests',
+              }} />
+              <StatCardItem card={{
+                label: 'Pending Review',
+                value: stats.pending as number,
+                icon: <Clock className="w-5 h-5 text-amber-600" />,
+                color: 'text-amber-600',
+                bg: 'bg-amber-50',
+                to: '/requests?status=PENDING_HALL_ADMIN',
+              }} />
+              <StatCardItem card={{
+                label: 'Approved',
+                value: stats.approved as number,
+                icon: <CheckCircle className="w-5 h-5 text-emerald-600" />,
+                color: 'text-emerald-600',
+                bg: 'bg-emerald-50',
+                to: '/requests?status=APPROVED_FINAL',
+              }} />
+              <StatCardItem card={{
+                label: 'Rejected',
+                value: stats.rejected as number,
+                icon: <XCircle className="w-5 h-5 text-red-500" />,
+                color: 'text-red-500',
+                bg: 'bg-red-50',
+                to: '/requests?status=REJECTED_BY_DEAN',
+              }} />
             </div>
 
             <div className="bg-white rounded-2xl p-5 border border-slate-100 shadow-sm">
@@ -97,7 +145,13 @@ export function DashboardPage() {
               </div>
               <div className="w-full bg-slate-100 rounded-full h-2.5">
                 <div
-                  className={`h-2.5 rounded-full transition-all ${(stats.total as number) >= 5 ? 'bg-red-500' : (stats.total as number) >= 3 ? 'bg-amber-500' : 'bg-emerald-500'}`}
+                  className={`h-2.5 rounded-full transition-all ${
+                    (stats.total as number) >= 5
+                      ? 'bg-red-500'
+                      : (stats.total as number) >= 3
+                      ? 'bg-amber-500'
+                      : 'bg-emerald-500'
+                  }`}
                   style={{ width: `${Math.min(100, ((stats.total as number) / 5) * 100)}%` }}
                 />
               </div>
@@ -133,20 +187,69 @@ export function DashboardPage() {
           </>
         )}
 
-        {/* Hall Admin / Dean stats */}
+        {/* ── Hall Admin / Dean stats ───────────────────── */}
         {(role === 'hall_admin' || role === 'dean') && (
           <>
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-              <StatCardItem card={{ label: 'Total Requests', value: stats.total as number, icon: <FileText className="w-5 h-5 text-blue-600" />, color: 'text-blue-600', bg: 'bg-blue-50' }} />
-              <StatCardItem card={{ label: 'Pending Hall Admin', value: stats.pendingHallAdmin as number, icon: <Clock className="w-5 h-5 text-amber-600" />, color: 'text-amber-600', bg: 'bg-amber-50' }} />
-              <StatCardItem card={{ label: 'Pending Dean', value: stats.pendingDean as number, icon: <Users className="w-5 h-5 text-blue-500" />, color: 'text-blue-500', bg: 'bg-blue-50' }} />
-              <StatCardItem card={{ label: 'Final Approved', value: stats.approvedFinal as number, icon: <CheckCircle className="w-5 h-5 text-emerald-600" />, color: 'text-emerald-600', bg: 'bg-emerald-50' }} />
+              <StatCardItem card={{
+                label: 'Total Requests',
+                value: stats.total as number,
+                icon: <FileText className="w-5 h-5 text-blue-600" />,
+                color: 'text-blue-600',
+                bg: 'bg-blue-50',
+                to: '/admin/requests',
+              }} />
+              <StatCardItem card={{
+                label: 'Pending Hall Admin',
+                value: stats.pendingHallAdmin as number,
+                icon: <Clock className="w-5 h-5 text-amber-600" />,
+                color: 'text-amber-600',
+                bg: 'bg-amber-50',
+                to: '/admin/requests?status=PENDING_HALL_ADMIN',
+              }} />
+              <StatCardItem card={{
+                label: 'Pending Dean',
+                value: stats.pendingDean as number,
+                icon: <Users className="w-5 h-5 text-blue-500" />,
+                color: 'text-blue-500',
+                bg: 'bg-blue-50',
+                to: '/admin/requests?status=APPROVED_BY_HALL_ADMIN',
+              }} />
+              <StatCardItem card={{
+                label: 'Final Approved',
+                value: stats.approvedFinal as number,
+                icon: <CheckCircle className="w-5 h-5 text-emerald-600" />,
+                color: 'text-emerald-600',
+                bg: 'bg-emerald-50',
+                to: '/admin/requests?status=APPROVED_FINAL',
+              }} />
             </div>
+
             <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
-              <StatCardItem card={{ label: 'Checked Out', value: stats.checkedOut as number, icon: <TrendingUp className="w-5 h-5 text-violet-500" />, color: 'text-violet-500', bg: 'bg-violet-50' }} />
-              <StatCardItem card={{ label: 'Checked In', value: stats.checkedIn as number, icon: <CheckCircle className="w-5 h-5 text-slate-500" />, color: 'text-slate-500', bg: 'bg-slate-50' }} />
-              <StatCardItem card={{ label: 'Total Rejected', value: stats.rejected as number, icon: <XCircle className="w-5 h-5 text-red-500" />, color: 'text-red-500', bg: 'bg-red-50' }} />
+              <StatCardItem card={{
+                label: 'Checked Out',
+                value: stats.checkedOut as number,
+                icon: <TrendingUp className="w-5 h-5 text-violet-500" />,
+                color: 'text-violet-500',
+                bg: 'bg-violet-50',
+              }} />
+              <StatCardItem card={{
+                label: 'Checked In',
+                value: stats.checkedIn as number,
+                icon: <CheckCircle className="w-5 h-5 text-slate-500" />,
+                color: 'text-slate-500',
+                bg: 'bg-slate-50',
+              }} />
+              <StatCardItem card={{
+                label: 'Total Rejected',
+                value: stats.rejected as number,
+                icon: <XCircle className="w-5 h-5 text-red-500" />,
+                color: 'text-red-500',
+                bg: 'bg-red-50',
+                to: '/admin/requests?status=REJECTED_BY_HALL_ADMIN',
+              }} />
             </div>
+
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <Link
                 to="/admin/requests"
@@ -172,13 +275,34 @@ export function DashboardPage() {
           </>
         )}
 
-        {/* Security stats */}
+        {/* ── Security stats ────────────────────────────── */}
         {role === 'security' && (
           <>
             <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
-              <StatCardItem card={{ label: 'Total Requests', value: stats.total as number, icon: <FileText className="w-5 h-5 text-blue-600" />, color: 'text-blue-600', bg: 'bg-blue-50' }} />
-              <StatCardItem card={{ label: 'Ready for Check-Out', value: stats.approvedFinal as number, icon: <AlertCircle className="w-5 h-5 text-amber-600" />, color: 'text-amber-600', bg: 'bg-amber-50' }} />
-              <StatCardItem card={{ label: 'Currently Out', value: stats.checkedOut as number, icon: <Shield className="w-5 h-5 text-red-500" />, color: 'text-red-500', bg: 'bg-red-50' }} />
+              <StatCardItem card={{
+                label: 'Total Requests',
+                value: stats.total as number,
+                icon: <FileText className="w-5 h-5 text-blue-600" />,
+                color: 'text-blue-600',
+                bg: 'bg-blue-50',
+                to: '/security/requests',
+              }} />
+              <StatCardItem card={{
+                label: 'Ready for Check-Out',
+                value: stats.approvedFinal as number,
+                icon: <AlertCircle className="w-5 h-5 text-amber-600" />,
+                color: 'text-amber-600',
+                bg: 'bg-amber-50',
+                to: '/security/requests?status=APPROVED_FINAL',
+              }} />
+              <StatCardItem card={{
+                label: 'Currently Out',
+                value: stats.checkedOut as number,
+                icon: <Shield className="w-5 h-5 text-red-500" />,
+                color: 'text-red-500',
+                bg: 'bg-red-50',
+                to: '/security/requests?status=CHECKED_OUT',
+              }} />
             </div>
             <Link
               to="/security/requests"
