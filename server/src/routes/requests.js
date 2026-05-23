@@ -288,6 +288,62 @@ router.post('/:id/hall-reject', protect, requireRole('hall_admin'), async (req, 
   }
 });
 
+router.get('/admin/stats', protect, requireRole('hall_admin', 'dean'), async (req, res) => {
+  try {
+    const all = await ExeatRequest.find().select('status created_at');
+
+    // Today's requests
+    const startOfDay = new Date();
+    startOfDay.setHours(0, 0, 0, 0);
+    const todayTotal = all.filter(r => new Date(r.created_at) >= startOfDay).length;
+
+    res.json({
+      total: all.length,
+      todayTotal,                                                              // ← new
+      pendingHallAdmin: all.filter(r => r.status === 'PENDING_HALL_ADMIN').length,
+      pendingDean: all.filter(r => r.status === 'APPROVED_BY_HALL_ADMIN').length,
+      approvedFinal: all.filter(r => r.status === 'APPROVED_FINAL').length,
+      checkedOut: all.filter(r => r.status === 'CHECKED_OUT').length,
+      checkedIn: all.filter(r => r.status === 'CHECKED_IN').length,
+      rejected: all.filter(r => ['REJECTED_BY_HALL_ADMIN', 'REJECTED_BY_DEAN'].includes(r.status)).length,
+    });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+router.get('/all', protect, requireRole('hall_admin', 'dean', 'security'), async (req, res) => {
+  try {
+    const filter = {};
+    if (req.query.status) filter.status = req.query.status;
+
+    // Hall admin never sees CHECKED_IN requests
+    if (req.user.role === 'hall_admin') {
+      filter.status = filter.status || { $ne: 'CHECKED_IN' };
+    }
+
+    let requests = await ExeatRequest.find(filter)
+      .populate('student_id', 'full_name crawford_number role')
+      .sort({ created_at: -1 });
+
+    if (req.query.search) {
+      const s = req.query.search.toLowerCase();
+      requests = requests.filter(r => {
+        const profile = r.student_id;
+        return (
+          profile?.full_name?.toLowerCase().includes(s) ||
+          profile?.crawford_number?.toLowerCase().includes(s) ||
+          r.destination?.toLowerCase().includes(s)
+        );
+      });
+    }
+
+    res.json(requests.map(formatRequest));
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
 // ── Dean: Approve ──────────────────────────────────────────────────────────
 
 router.post('/:id/dean-approve', protect, requireRole('dean'), async (req, res) => {
