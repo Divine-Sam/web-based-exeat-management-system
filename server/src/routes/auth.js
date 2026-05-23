@@ -60,7 +60,7 @@ router.post('/login', async (req, res) => {
   }
 });
 
-// GET /api/auth/me  — verify token & return user
+// GET /api/auth/me
 router.get('/me', protect, (req, res) => {
   res.json({ user: req.user.toProfile() });
 });
@@ -72,9 +72,14 @@ router.put('/update-name', protect, async (req, res) => {
     if (!full_name?.trim()) {
       return res.status(400).json({ message: 'Full name is required.' });
     }
-    req.user.full_name = full_name.trim();
-    await req.user.save();
-    res.json({ user: req.user.toProfile() });
+
+    const user = await User.findByIdAndUpdate(
+      req.user._id,
+      { full_name: full_name.trim() },
+      { new: true }
+    );
+
+    res.json({ user: user.toProfile() });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
@@ -84,25 +89,27 @@ router.put('/update-name', protect, async (req, res) => {
 router.put('/change-password', protect, async (req, res) => {
   try {
     const { current_password, new_password } = req.body;
+
     if (!current_password || !new_password) {
       return res.status(400).json({ message: 'Both current and new password are required.' });
     }
     if (new_password.length < 6) {
       return res.status(400).json({ message: 'New password must be at least 6 characters.' });
     }
-    const userWithPassword = await User.findById(req.user._id).select('+password');
-    const isMatch = await userWithPassword.comparePassword(current_password);
+
+    const user = await User.findById(req.user._id);
+    const isMatch = await user.comparePassword(current_password);
     if (!isMatch) {
       return res.status(400).json({ message: 'Current password is incorrect.' });
     }
-    userWithPassword.password = new_password;
-    await userWithPassword.save();
+
+    user.password = new_password;
+    await user.save();
+
     res.json({ message: 'Password changed successfully.' });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
 });
-
-module.exports = router;
 
 module.exports = router;
