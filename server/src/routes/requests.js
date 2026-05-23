@@ -213,17 +213,35 @@ router.get('/all', protect, requireRole('hall_admin', 'dean', 'security'), async
 
 // ── Admin: Stats ────────────────────────────────────────────────────────────
 
+// ── Admin: Stats ────────────────────────────────────────────────────────────
+
 router.get('/admin/stats', protect, requireRole('hall_admin', 'dean'), async (req, res) => {
   try {
-    const all = await ExeatRequest.find().select('status');
+    const all = await ExeatRequest.find().select('status created_at');
+
+    // Today's requests — only PENDING ones created today
+    const startOfDay = new Date();
+    startOfDay.setHours(0, 0, 0, 0);
+    const todayTotal = all.filter(r =>
+      new Date(r.created_at) >= startOfDay &&
+      r.status === 'PENDING_HALL_ADMIN'          // ✅ only new/pending requests today
+    ).length;
+
     res.json({
       total: all.length,
-      pendingHallAdmin: all.filter(r => r.status === 'PENDING_HALL_ADMIN').length,
-      pendingDean: all.filter(r => r.status === 'APPROVED_BY_HALL_ADMIN').length,
+      todayTotal,                                // ← requests pending hall admin created today
+      pendingHallAdmin: all.filter(r =>
+        r.status === 'PENDING_HALL_ADMIN'        // ✅ only truly pending, not approved
+      ).length,
+      pendingDean: all.filter(r =>
+        r.status === 'APPROVED_BY_HALL_ADMIN'    // ✅ awaiting dean, not yet approved/rejected
+      ).length,
       approvedFinal: all.filter(r => r.status === 'APPROVED_FINAL').length,
       checkedOut: all.filter(r => r.status === 'CHECKED_OUT').length,
       checkedIn: all.filter(r => r.status === 'CHECKED_IN').length,
-      rejected: all.filter(r => ['REJECTED_BY_HALL_ADMIN', 'REJECTED_BY_DEAN'].includes(r.status)).length,
+      rejected: all.filter(r =>
+        ['REJECTED_BY_HALL_ADMIN', 'REJECTED_BY_DEAN'].includes(r.status)
+      ).length,
     });
   } catch (err) {
     res.status(500).json({ message: err.message });

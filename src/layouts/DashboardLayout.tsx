@@ -3,7 +3,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import {
   LayoutDashboard, FileText, PlusCircle, ClipboardList, Shield,
-  LogOut, Menu, X, ChevronRight, Bell
+  LogOut, Menu, ChevronRight, Bell
 } from 'lucide-react';
 import { Role } from '../types';
 
