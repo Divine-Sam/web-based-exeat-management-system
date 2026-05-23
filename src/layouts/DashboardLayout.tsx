@@ -53,9 +53,9 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (role !== 'hall_admin' && role !== 'dean') return;
 
-    const fetchBellCount = async () => {
-      try {
-        const token = localStorage.getItem('token');
+   const fetchBellCount = async () => {
+  try {
+    const token = localStorage.getItem('exeat_token');  
         const res = await fetch(
           `${import.meta.env.VITE_API_URL}/requests/admin/stats`,
           { headers: { Authorization: `Bearer ${token}` } }

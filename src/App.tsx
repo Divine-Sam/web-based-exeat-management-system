@@ -1,18 +1,18 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { AuthProvider, useAuth } from '../context/AuthContext';
-import { ToastProvider } from '../context/ToastContext';
-import { ProtectedRoute } from '../components/ProtectedRoute';
-import { LoginPage } from '../pages/LoginPage';
-import { SignUpPage } from '../pages/SignUpPage';
-import { DashboardPage } from '../pages/DashboardPage';
-import { NewRequestPage } from '../pages/student/NewRequestPage';
-import { RequestHistoryPage } from '../pages/student/RequestHistoryPage';
-import { RequestDetailPage } from '../pages/student/RequestDetailPage';
-import { AdminRequestsPage } from '../pages/admin/AdminRequestsPage';
-import { AuditLogPage } from '../pages/admin/AuditLogPage';
-import { SecurityDeskPage } from '../pages/security/SecurityDeskPage';
+import { AuthProvider, useAuth } from './context/AuthContext';
+import { ToastProvider } from './context/ToastContext';
+import { ProtectedRoute } from './components/ProtectedRoute';
+import { LoginPage } from './pages/LoginPage';
+import { SignUpPage } from './pages/SignUpPage';
+import { DashboardPage } from './pages/DashboardPage';
+import { NewRequestPage } from './pages/student/NewRequestPage';
+import { RequestHistoryPage } from './pages/student/RequestHistoryPage';
+import { RequestDetailPage } from './pages/student/RequestDetailPage';
+import { AdminRequestsPage } from './pages/admin/AdminRequestsPage';
+import { AuditLogPage } from './pages/admin/AuditLogPage';
+import { SecurityDeskPage } from './pages/security/SecurityDeskPage';
 import { AccountSettingsPage } from './pages/account/AccountSettingsPage'; 
-import { PageLoader } from '../components/LoadingSpinner';
+import { PageLoader } from './components/LoadingSpinner';
 
 function RootRedirect() {
   const { user, loading } = useAuth();
