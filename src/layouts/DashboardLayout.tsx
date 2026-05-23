@@ -3,7 +3,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import {
   LayoutDashboard, FileText, PlusCircle, ClipboardList, Shield,
-  LogOut, Menu, ChevronRight, Bell
+  LogOut, Menu, ChevronRight, Bell, Settings
 } from 'lucide-react';
 import { Role } from '../types';
 
@@ -21,6 +21,7 @@ const NAV_ITEMS: NavItem[] = [
   { label: 'Review Requests', path: '/admin/requests',   icon: <ClipboardList className="w-5 h-5" />, roles: ['hall_admin', 'dean'] },
   { label: 'Security Desk',   path: '/security/requests',icon: <Shield className="w-5 h-5" />,        roles: ['security'] },
   // ✅ Audit Logs removed
+  { label: 'Account Settings',path: '/account/settings', icon: <Settings className="w-5 h-5" />,    roles: ['student', 'hall_admin', 'dean', 'security'] },
 ];
 
 const ROLE_LABELS: Record<Role, string> = {

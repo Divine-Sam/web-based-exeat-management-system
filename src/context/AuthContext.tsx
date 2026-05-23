@@ -8,6 +8,8 @@ interface AuthContextValue {
   signUp: (fullName: string, crawfordNumber: string, password: string, role: Role) => Promise<void>;
   login: (crawfordNumber: string, password: string, role: Role) => Promise<void>;
   logout: () => Promise<void>;
+  updateName: (fullName: string) => Promise<void>;           // ✅ new
+  changePassword: (currentPassword: string, newPassword: string) => Promise<void>; // ✅ new
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -74,8 +76,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(null);
   }
 
+  // ✅ Update display name — patches local user state after success
+  async function updateName(fullName: string): Promise<void> {
+    const { user: updated } = await api.put<{ user: Profile }>(
+      '/auth/update-name',
+      { full_name: fullName }
+    );
+    setUser(prev => prev ? {
+      ...prev,
+      profile: { ...prev.profile, full_name: updated.full_name }
+    } : prev);
+  }
+
+  // ✅ Change password — backend validates current password
+  async function changePassword(currentPassword: string, newPassword: string): Promise<void> {
+    await api.put('/auth/change-password', { current_password: currentPassword, new_password: newPassword });
+  }
+
   return (
-    <AuthContext.Provider value={{ user, loading, signUp, login, logout }}>
+    <AuthContext.Provider value={{ user, loading, signUp, login, logout, updateName, changePassword }}>
       {children}
     </AuthContext.Provider>
   );
