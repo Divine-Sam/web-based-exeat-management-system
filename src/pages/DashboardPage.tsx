@@ -6,7 +6,7 @@ import { getStudentStats, getAdminStats } from '../services/requestService';
 import { LoadingSpinner } from '../components/LoadingSpinner';
 import {
   FileText, Clock, CheckCircle, XCircle, ArrowRight,
-  Users, Shield, TrendingUp, AlertCircle
+  Users, Shield, AlertCircle
 } from 'lucide-react';
 
 interface StatCard {
@@ -16,6 +16,7 @@ interface StatCard {
   color: string;
   bg: string;
   to?: string;
+  sub?: string;
 }
 
 function StatCardItem({ card }: { card: StatCard }) {
@@ -24,6 +25,9 @@ function StatCardItem({ card }: { card: StatCard }) {
       <div>
         <p className="text-sm text-slate-500 font-medium">{card.label}</p>
         <p className={`text-3xl font-bold mt-1 ${card.color}`}>{card.value}</p>
+        {card.sub && (
+          <p className="text-xs text-slate-400 mt-1">{card.sub}</p>
+        )}
       </div>
       <div className={`w-11 h-11 rounded-xl ${card.bg} flex items-center justify-center`}>
         {card.icon}
@@ -85,17 +89,24 @@ export function DashboardPage() {
     );
   }
 
+  // Today's date string for display
+  const today = new Date().toLocaleDateString(undefined, {
+    weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+  });
+
   return (
     <DashboardLayout>
       <div className="space-y-6">
 
         {/* Welcome banner */}
         <div className="bg-gradient-to-r from-blue-600 to-blue-700 rounded-2xl p-6 text-white shadow-lg shadow-blue-100">
-          <h2 className="text-xl font-bold">Welcome back, {user?.profile.full_name.split(' ')[0]}</h2>
+          <h2 className="text-xl font-bold">
+            Welcome back, {user?.profile.full_name.split(' ')[0]}
+          </h2>
           <p className="text-blue-200 text-sm mt-1">
             {role === 'student' && `Crawford No: ${user?.profile.crawford_number} — Session: ${stats.session}`}
-            {role === 'hall_admin' && 'Review and process pending exeat requests'}
-            {role === 'dean' && 'Final approval of Hall Admin reviewed requests'}
+            {role === 'hall_admin' && `${today}`}
+            {role === 'dean' && `${today}`}
             {role === 'security' && 'Manage student check-in and check-out'}
           </p>
         </div>
@@ -187,91 +198,113 @@ export function DashboardPage() {
           </>
         )}
 
-        {/* ── Hall Admin / Dean stats ───────────────────── */}
-        {(role === 'hall_admin' || role === 'dean') && (
+        {/* ── Hall Admin stats ──────────────────────────── */}
+        {role === 'hall_admin' && (
           <>
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+
+              {/* Total requests TODAY */}
               <StatCardItem card={{
-                label: 'Total Requests',
-                value: stats.total as number,
+                label: 'Requests Today',
+                value: stats.todayTotal as number ?? 0,
                 icon: <FileText className="w-5 h-5 text-blue-600" />,
                 color: 'text-blue-600',
                 bg: 'bg-blue-50',
+                sub: 'New requests received today',
                 to: '/admin/requests',
               }} />
+
+              {/* Pending Dean */}
               <StatCardItem card={{
-                label: 'Pending Hall Admin',
-                value: stats.pendingHallAdmin as number,
-                icon: <Clock className="w-5 h-5 text-amber-600" />,
-                color: 'text-amber-600',
-                bg: 'bg-amber-50',
-                to: '/admin/requests?status=PENDING_HALL_ADMIN',
-              }} />
-              <StatCardItem card={{
-                label: 'Pending Dean',
+                label: 'Awaiting Dean Approval',
                 value: stats.pendingDean as number,
                 icon: <Users className="w-5 h-5 text-blue-500" />,
                 color: 'text-blue-500',
                 bg: 'bg-blue-50',
+                sub: 'Approved by you — pending dean',
                 to: '/admin/requests?status=APPROVED_BY_HALL_ADMIN',
               }} />
+
+              {/* Pending Hall Admin — your queue */}
+              <StatCardItem card={{
+                label: 'Pending Your Review',
+                value: stats.pendingHallAdmin as number,
+                icon: <Clock className="w-5 h-5 text-amber-600" />,
+                color: 'text-amber-600',
+                bg: 'bg-amber-50',
+                sub: 'Requests awaiting your action',
+                to: '/admin/requests?status=PENDING_HALL_ADMIN',
+              }} />
+            </div>
+
+            {/* Review Requests CTA */}
+            <Link
+              to="/admin/requests?status=PENDING_HALL_ADMIN"
+              className="flex items-center justify-between bg-blue-600 hover:bg-blue-700 text-white rounded-2xl p-5 transition-colors shadow-sm shadow-blue-200 group"
+            >
+              <div>
+                <p className="font-semibold">Review Pending Requests</p>
+                <p className="text-blue-200 text-sm mt-0.5">
+                  {stats.pendingHallAdmin as number} request(s) pending your review
+                </p>
+              </div>
+              <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+            </Link>
+          </>
+        )}
+
+        {/* ── Dean stats ────────────────────────────────── */}
+        {role === 'dean' && (
+          <>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+
+              {/* Total requests TODAY */}
+              <StatCardItem card={{
+                label: 'Requests Today',
+                value: stats.todayTotal as number ?? 0,
+                icon: <FileText className="w-5 h-5 text-blue-600" />,
+                color: 'text-blue-600',
+                bg: 'bg-blue-50',
+                sub: 'New requests received today',
+                to: '/admin/requests',
+              }} />
+
+              {/* Pending Dean — your queue */}
+              <StatCardItem card={{
+                label: 'Pending Your Approval',
+                value: stats.pendingDean as number,
+                icon: <Clock className="w-5 h-5 text-amber-600" />,
+                color: 'text-amber-600',
+                bg: 'bg-amber-50',
+                sub: 'Awaiting your final decision',
+                to: '/admin/requests?status=APPROVED_BY_HALL_ADMIN',
+              }} />
+
+              {/* Final Approved */}
               <StatCardItem card={{
                 label: 'Final Approved',
                 value: stats.approvedFinal as number,
                 icon: <CheckCircle className="w-5 h-5 text-emerald-600" />,
                 color: 'text-emerald-600',
                 bg: 'bg-emerald-50',
+                sub: 'Fully approved requests',
                 to: '/admin/requests?status=APPROVED_FINAL',
               }} />
             </div>
 
-            <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
-              <StatCardItem card={{
-                label: 'Checked Out',
-                value: stats.checkedOut as number,
-                icon: <TrendingUp className="w-5 h-5 text-violet-500" />,
-                color: 'text-violet-500',
-                bg: 'bg-violet-50',
-              }} />
-              <StatCardItem card={{
-                label: 'Checked In',
-                value: stats.checkedIn as number,
-                icon: <CheckCircle className="w-5 h-5 text-slate-500" />,
-                color: 'text-slate-500',
-                bg: 'bg-slate-50',
-              }} />
-              <StatCardItem card={{
-                label: 'Total Rejected',
-                value: stats.rejected as number,
-                icon: <XCircle className="w-5 h-5 text-red-500" />,
-                color: 'text-red-500',
-                bg: 'bg-red-50',
-                to: '/admin/requests?status=REJECTED_BY_HALL_ADMIN',
-              }} />
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <Link
-                to="/admin/requests"
-                className="flex items-center justify-between bg-blue-600 hover:bg-blue-700 text-white rounded-2xl p-5 transition-colors shadow-sm shadow-blue-200 group"
-              >
-                <div>
-                  <p className="font-semibold">Review Requests</p>
-                  <p className="text-blue-200 text-sm mt-0.5">{stats.pendingHallAdmin as number} pending your review</p>
-                </div>
-                <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-              </Link>
-              <Link
-                to="/admin/audit"
-                className="flex items-center justify-between bg-white hover:bg-slate-50 text-slate-700 rounded-2xl p-5 border border-slate-200 transition-colors group"
-              >
-                <div>
-                  <p className="font-semibold">Audit Logs</p>
-                  <p className="text-slate-400 text-sm mt-0.5">Full action history</p>
-                </div>
-                <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform text-slate-400" />
-              </Link>
-            </div>
+            {/* Review Requests CTA */}
+            <Link
+              to="/admin/requests?status=APPROVED_BY_HALL_ADMIN"
+              className="flex items-center justify-between bg-blue-600 hover:bg-blue-700 text-white rounded-2xl p-5 transition-colors shadow-sm shadow-blue-200 group"
+            >
+              <div>
+                <p className="font-semibold">Review Pending Requests</p>
+                <p className="text-blue-200 text-sm mt-0.5">
+                  {stats.pendingDean as number} request(s) awaiting your final approval
+                </p>
+              </div>
+              <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+            </Link>
           </>
         )}
 
