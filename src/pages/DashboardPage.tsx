@@ -89,10 +89,12 @@ export function DashboardPage() {
     );
   }
 
-  // Today's date string for display
   const today = new Date().toLocaleDateString(undefined, {
     weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
   });
+
+  // ── safe number helper ──────────────────────────────────────────────────────
+  const n = (key: string): number => (stats[key] as number) ?? 0;
 
   return (
     <DashboardLayout>
@@ -104,47 +106,43 @@ export function DashboardPage() {
             Welcome back, {user?.profile.full_name.split(' ')[0]}
           </h2>
           <p className="text-blue-200 text-sm mt-1">
-            {role === 'student' && `Crawford No: ${user?.profile.crawford_number} — Session: ${stats.session}`}
-            {role === 'hall_admin' && `${today}`}
-            {role === 'dean' && `${today}`}
-            {role === 'security' && 'Manage student check-in and check-out'}
+            {role === 'student'    && `Crawford No: ${user?.profile.crawford_number} — Session: ${stats.session}`}
+            {role === 'hall_admin' && today}
+            {role === 'dean'       && today}
+            {role === 'security'   && 'Manage student check-in and check-out'}
           </p>
         </div>
 
-        {/* ── Student stats ─────────────────────────────── */}
+        {/* ── Student stats ────────────────────────────────────────────────── */}
         {role === 'student' && (
           <>
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
               <StatCardItem card={{
                 label: 'Total This Session',
-                value: stats.total as number,
+                value: n('total'),
                 icon: <FileText className="w-5 h-5 text-blue-600" />,
-                color: 'text-blue-600',
-                bg: 'bg-blue-50',
+                color: 'text-blue-600', bg: 'bg-blue-50',
                 to: '/requests',
               }} />
               <StatCardItem card={{
                 label: 'Pending Review',
-                value: stats.pending as number,
+                value: n('pending'),
                 icon: <Clock className="w-5 h-5 text-amber-600" />,
-                color: 'text-amber-600',
-                bg: 'bg-amber-50',
+                color: 'text-amber-600', bg: 'bg-amber-50',
                 to: '/requests?status=PENDING_HALL_ADMIN',
               }} />
               <StatCardItem card={{
                 label: 'Approved',
-                value: stats.approved as number,
+                value: n('approved'),
                 icon: <CheckCircle className="w-5 h-5 text-emerald-600" />,
-                color: 'text-emerald-600',
-                bg: 'bg-emerald-50',
+                color: 'text-emerald-600', bg: 'bg-emerald-50',
                 to: '/requests?status=APPROVED_FINAL',
               }} />
               <StatCardItem card={{
                 label: 'Rejected',
-                value: stats.rejected as number,
+                value: n('rejected'),
                 icon: <XCircle className="w-5 h-5 text-red-500" />,
-                color: 'text-red-500',
-                bg: 'bg-red-50',
+                color: 'text-red-500', bg: 'bg-red-50',
                 to: '/requests?status=REJECTED_BY_DEAN',
               }} />
             </div>
@@ -152,23 +150,19 @@ export function DashboardPage() {
             <div className="bg-white rounded-2xl p-5 border border-slate-100 shadow-sm">
               <div className="flex items-center justify-between mb-3">
                 <h3 className="font-semibold text-slate-800">Session Limit</h3>
-                <span className="text-sm text-slate-500">{stats.total as number} / 5 used</span>
+                <span className="text-sm text-slate-500">{n('total')} / 5 used</span>
               </div>
               <div className="w-full bg-slate-100 rounded-full h-2.5">
                 <div
                   className={`h-2.5 rounded-full transition-all ${
-                    (stats.total as number) >= 5
-                      ? 'bg-red-500'
-                      : (stats.total as number) >= 3
-                      ? 'bg-amber-500'
-                      : 'bg-emerald-500'
+                    n('total') >= 5 ? 'bg-red-500' : n('total') >= 3 ? 'bg-amber-500' : 'bg-emerald-500'
                   }`}
-                  style={{ width: `${Math.min(100, ((stats.total as number) / 5) * 100)}%` }}
+                  style={{ width: `${Math.min(100, (n('total') / 5) * 100)}%` }}
                 />
               </div>
               <p className="text-xs text-slate-500 mt-2">
-                {(stats.remaining as number) > 0
-                  ? `${stats.remaining} request(s) remaining this session`
+                {n('remaining') > 0
+                  ? `${n('remaining')} request(s) remaining this session`
                   : 'Session limit reached — no more requests can be submitted'}
               </p>
             </div>
@@ -198,46 +192,42 @@ export function DashboardPage() {
           </>
         )}
 
-        {/* ── Hall Admin stats ──────────────────────────── */}
+        {/* ── Hall Admin stats ─────────────────────────────────────────────── */}
         {role === 'hall_admin' && (
           <>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
 
-              {/* Total requests TODAY */}
+              {/* ✅ Only PENDING_HALL_ADMIN created today */}
               <StatCardItem card={{
                 label: 'Requests Today',
-                value: stats.todayTotal as number ?? 0,
+                value: n('todayTotal'),
                 icon: <FileText className="w-5 h-5 text-blue-600" />,
-                color: 'text-blue-600',
-                bg: 'bg-blue-50',
-                sub: 'New requests received today',
-                to: '/admin/requests',
+                color: 'text-blue-600', bg: 'bg-blue-50',
+                sub: 'New unreviewed requests today',
+                to: '/admin/requests?status=PENDING_HALL_ADMIN',
               }} />
 
-              {/* Pending Dean */}
+              {/* ✅ APPROVED_BY_HALL_ADMIN — moved on, awaiting dean */}
               <StatCardItem card={{
                 label: 'Awaiting Dean Approval',
-                value: stats.pendingDean as number,
+                value: n('pendingDean'),
                 icon: <Users className="w-5 h-5 text-blue-500" />,
-                color: 'text-blue-500',
-                bg: 'bg-blue-50',
+                color: 'text-blue-500', bg: 'bg-blue-50',
                 sub: 'Approved by you — pending dean',
                 to: '/admin/requests?status=APPROVED_BY_HALL_ADMIN',
               }} />
 
-              {/* Pending Hall Admin — your queue */}
+              {/* ✅ PENDING_HALL_ADMIN — hall admin yet to attend */}
               <StatCardItem card={{
                 label: 'Pending Your Review',
-                value: stats.pendingHallAdmin as number,
+                value: n('pendingHallAdmin'),
                 icon: <Clock className="w-5 h-5 text-amber-600" />,
-                color: 'text-amber-600',
-                bg: 'bg-amber-50',
-                sub: 'Requests awaiting your action',
+                color: 'text-amber-600', bg: 'bg-amber-50',
+                sub: 'Requests you are yet to attend to',
                 to: '/admin/requests?status=PENDING_HALL_ADMIN',
               }} />
             </div>
 
-            {/* Review Requests CTA */}
             <Link
               to="/admin/requests?status=PENDING_HALL_ADMIN"
               className="flex items-center justify-between bg-blue-600 hover:bg-blue-700 text-white rounded-2xl p-5 transition-colors shadow-sm shadow-blue-200 group"
@@ -245,7 +235,7 @@ export function DashboardPage() {
               <div>
                 <p className="font-semibold">Review Pending Requests</p>
                 <p className="text-blue-200 text-sm mt-0.5">
-                  {stats.pendingHallAdmin as number} request(s) pending your review
+                  {n('pendingHallAdmin')} request(s) pending your review
                 </p>
               </div>
               <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
@@ -253,29 +243,27 @@ export function DashboardPage() {
           </>
         )}
 
-        {/* ── Dean stats ────────────────────────────────── */}
+        {/* ── Dean stats ───────────────────────────────────────────────────── */}
         {role === 'dean' && (
           <>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
 
-              {/* Total requests TODAY */}
+              {/* ✅ Only PENDING_HALL_ADMIN created today (new intake) */}
               <StatCardItem card={{
                 label: 'Requests Today',
-                value: stats.todayTotal as number ?? 0,
+                value: n('todayTotal'),
                 icon: <FileText className="w-5 h-5 text-blue-600" />,
-                color: 'text-blue-600',
-                bg: 'bg-blue-50',
+                color: 'text-blue-600', bg: 'bg-blue-50',
                 sub: 'New requests received today',
                 to: '/admin/requests',
               }} />
 
-              {/* Pending Dean — your queue */}
+              {/* ✅ APPROVED_BY_HALL_ADMIN — pending dean final decision */}
               <StatCardItem card={{
                 label: 'Pending Your Approval',
-                value: stats.pendingDean as number,
+                value: n('pendingDean'),
                 icon: <Clock className="w-5 h-5 text-amber-600" />,
-                color: 'text-amber-600',
-                bg: 'bg-amber-50',
+                color: 'text-amber-600', bg: 'bg-amber-50',
                 sub: 'Awaiting your final decision',
                 to: '/admin/requests?status=APPROVED_BY_HALL_ADMIN',
               }} />
@@ -283,16 +271,14 @@ export function DashboardPage() {
               {/* Final Approved */}
               <StatCardItem card={{
                 label: 'Final Approved',
-                value: stats.approvedFinal as number,
+                value: n('approvedFinal'),
                 icon: <CheckCircle className="w-5 h-5 text-emerald-600" />,
-                color: 'text-emerald-600',
-                bg: 'bg-emerald-50',
+                color: 'text-emerald-600', bg: 'bg-emerald-50',
                 sub: 'Fully approved requests',
                 to: '/admin/requests?status=APPROVED_FINAL',
               }} />
             </div>
 
-            {/* Review Requests CTA */}
             <Link
               to="/admin/requests?status=APPROVED_BY_HALL_ADMIN"
               className="flex items-center justify-between bg-blue-600 hover:bg-blue-700 text-white rounded-2xl p-5 transition-colors shadow-sm shadow-blue-200 group"
@@ -300,7 +286,7 @@ export function DashboardPage() {
               <div>
                 <p className="font-semibold">Review Pending Requests</p>
                 <p className="text-blue-200 text-sm mt-0.5">
-                  {stats.pendingDean as number} request(s) awaiting your final approval
+                  {n('pendingDean')} request(s) awaiting your final approval
                 </p>
               </div>
               <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
@@ -308,32 +294,29 @@ export function DashboardPage() {
           </>
         )}
 
-        {/* ── Security stats ────────────────────────────── */}
+        {/* ── Security stats ───────────────────────────────────────────────── */}
         {role === 'security' && (
           <>
             <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
               <StatCardItem card={{
                 label: 'Total Requests',
-                value: stats.total as number,
+                value: n('total'),
                 icon: <FileText className="w-5 h-5 text-blue-600" />,
-                color: 'text-blue-600',
-                bg: 'bg-blue-50',
+                color: 'text-blue-600', bg: 'bg-blue-50',
                 to: '/security/requests',
               }} />
               <StatCardItem card={{
                 label: 'Ready for Check-Out',
-                value: stats.approvedFinal as number,
+                value: n('approvedFinal'),
                 icon: <AlertCircle className="w-5 h-5 text-amber-600" />,
-                color: 'text-amber-600',
-                bg: 'bg-amber-50',
+                color: 'text-amber-600', bg: 'bg-amber-50',
                 to: '/security/requests?status=APPROVED_FINAL',
               }} />
               <StatCardItem card={{
                 label: 'Currently Out',
-                value: stats.checkedOut as number,
+                value: n('checkedOut'),
                 icon: <Shield className="w-5 h-5 text-red-500" />,
-                color: 'text-red-500',
-                bg: 'bg-red-50',
+                color: 'text-red-500', bg: 'bg-red-50',
                 to: '/security/requests?status=CHECKED_OUT',
               }} />
             </div>
@@ -349,6 +332,7 @@ export function DashboardPage() {
             </Link>
           </>
         )}
+
       </div>
     </DashboardLayout>
   );
