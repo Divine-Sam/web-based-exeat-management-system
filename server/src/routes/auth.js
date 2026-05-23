@@ -65,4 +65,44 @@ router.get('/me', protect, (req, res) => {
   res.json({ user: req.user.toProfile() });
 });
 
+// ── Update Name ─────────────────────────────────────────────────────────────
+router.put('/update-name', protect, async (req, res) => {
+  try {
+    const { full_name } = req.body;
+    if (!full_name?.trim()) {
+      return res.status(400).json({ message: 'Full name is required.' });
+    }
+    req.user.full_name = full_name.trim();
+    await req.user.save();
+    res.json({ user: req.user.toProfile() });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// ── Change Password ─────────────────────────────────────────────────────────
+router.put('/change-password', protect, async (req, res) => {
+  try {
+    const { current_password, new_password } = req.body;
+    if (!current_password || !new_password) {
+      return res.status(400).json({ message: 'Both current and new password are required.' });
+    }
+    if (new_password.length < 6) {
+      return res.status(400).json({ message: 'New password must be at least 6 characters.' });
+    }
+    const userWithPassword = await User.findById(req.user._id).select('+password');
+    const isMatch = await userWithPassword.comparePassword(current_password);
+    if (!isMatch) {
+      return res.status(400).json({ message: 'Current password is incorrect.' });
+    }
+    userWithPassword.password = new_password;
+    await userWithPassword.save();
+    res.json({ message: 'Password changed successfully.' });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+module.exports = router;
+
 module.exports = router;
