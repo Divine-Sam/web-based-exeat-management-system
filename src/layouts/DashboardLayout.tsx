@@ -1,3 +1,4 @@
+import { api } from '../lib/api';
 import { ReactNode, useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
@@ -55,19 +56,16 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
 
    const fetchBellCount = async () => {
   try {
-    const token = localStorage.getItem('exeat_token');  
-        const res = await fetch(
-          `${import.meta.env.VITE_API_URL}/requests/admin/stats`,
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
-        if (!res.ok) return;
-        const data = await res.json();
-        if (role === 'hall_admin') setBellCount(data.pendingHallAdmin ?? 0);
-        if (role === 'dean')       setBellCount(data.pendingDean ?? 0);
-      } catch {
-        // silently fail
-      }
-    };
+    const data = await api.get<{
+      pendingHallAdmin: number;
+      pendingDean: number;
+    }>('/requests/admin/stats');
+    if (role === 'hall_admin') setBellCount(data.pendingHallAdmin ?? 0);
+    if (role === 'dean')       setBellCount(data.pendingDean ?? 0);
+  } catch {
+    // silently fail — don't redirect on error
+  }
+};
 
     fetchBellCount();
     const interval = setInterval(fetchBellCount, 30_000); // refresh every 30s
