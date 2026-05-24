@@ -316,7 +316,7 @@ router.get('/admin/stats', protect, requireRole('hall_admin', 'dean'), async (re
 
     // Today's requests
     const startOfDay = new Date();
-    startOfDay.setHours(0, 0, 0, 0);
+    startOfDay.setUTCHours(0, 0, 0, 0);
     const todayTotal = all.filter(r => new Date(r.created_at) >= startOfDay).length;
 
     res.json({
