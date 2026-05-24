@@ -187,7 +187,12 @@ router.get('/my/stats', protect, requireRole('student'), async (req, res) => {
 router.get('/all', protect, requireRole('hall_admin', 'dean', 'security'), async (req, res) => {
   try {
     const filter = {};
-    if (req.query.status) filter.status = req.query.status;
+    if (req.query.status) {
+      filter.status = req.query.status;
+    } else if (req.user.role === 'hall_admin' || req.user.role === 'dean') {
+      // ✅ By default exclude completed requests for hall_admin and dean
+      filter.status = { $nin: ['CHECKED_OUT', 'CHECKED_IN'] };
+    }
 
     let requests = await ExeatRequest.find(filter)
       .populate('student_id', 'full_name crawford_number role')
@@ -211,7 +216,6 @@ router.get('/all', protect, requireRole('hall_admin', 'dean', 'security'), async
   }
 });
 
-// ── Admin: Stats ────────────────────────────────────────────────────────────
 
 // ── Admin: Stats ────────────────────────────────────────────────────────────
 
