@@ -226,9 +226,9 @@ router.get('/admin/stats', protect, requireRole('hall_admin', 'dean'), async (re
     // Today's requests — only PENDING ones created today
     const startOfDay = new Date();
     startOfDay.setHours(0, 0, 0, 0);
+    // ✅ Fix — count ALL requests created today
     const todayTotal = all.filter(r =>
-      new Date(r.created_at) >= startOfDay &&
-      r.status === 'PENDING_HALL_ADMIN'          // ✅ only new/pending requests today
+      new Date(r.created_at) >= startOfDay
     ).length;
 
     res.json({

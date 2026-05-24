@@ -203,7 +203,7 @@ export function DashboardPage() {
                 value: n('todayTotal'),
                 icon: <FileText className="w-5 h-5 text-blue-600" />,
                 color: 'text-blue-600', bg: 'bg-blue-50',
-                sub: 'New unreviewed requests today',
+                sub: 'Total requests submitted today',
                 to: '/admin/requests?status=PENDING_HALL_ADMIN',
               }} />
 
