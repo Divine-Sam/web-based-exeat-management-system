@@ -15,13 +15,14 @@ import {
   ExternalLink, Calendar, MapPin, MessageSquare, User, Phone
 } from 'lucide-react';
 
+
 const STATUS_FILTERS: { value: '' | RequestStatus; label: string }[] = [
-  { value: '',                      label: 'All' },
-  { value: 'PENDING_HALL_ADMIN',    label: 'Pending Hall Admin' },
-  { value: 'APPROVED_BY_HALL_ADMIN',label: 'Pending Dean' },
-  { value: 'APPROVED_FINAL',        label: 'Approved' },
-  { value: 'REJECTED_BY_HALL_ADMIN',label: 'Rejected (Hall)' },
-  { value: 'REJECTED_BY_DEAN',      label: 'Rejected (Dean)' },
+  { value: '',                       label: 'All Active' },
+  { value: 'PENDING_HALL_ADMIN',     label: 'Pending Hall Admin' },
+  { value: 'APPROVED_BY_HALL_ADMIN', label: 'Pending Dean' },
+  { value: 'APPROVED_FINAL',         label: 'Final Approved' },
+  { value: 'REJECTED_BY_HALL_ADMIN', label: 'Rejected (Hall)' },
+  { value: 'REJECTED_BY_DEAN',       label: 'Rejected (Dean)' },
 ];
 
 export function AdminRequestsPage() {
