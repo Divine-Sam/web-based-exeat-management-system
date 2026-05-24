@@ -11,9 +11,9 @@ export async function createRequest(
     reason_category: string;
     departure_date: string;
     return_date: string;
-    parent_name: string;          
-    parent_phone: string;         
-    parent_relationship: string;  
+    parent_name: string;
+    parent_phone: string;
+    parent_relationship: string;
     file?: File;
   }
 ): Promise<ExeatRequest> {
@@ -23,13 +23,12 @@ export async function createRequest(
   form.append('reason_category', data.reason_category);
   form.append('departure_date', data.departure_date);
   form.append('return_date', data.return_date);
-  form.append('parent_name', data.parent_name);           // ← add
-  form.append('parent_phone', data.parent_phone);         // ← add
-  form.append('parent_relationship', data.parent_relationship); // ← add
+  form.append('parent_name', data.parent_name);
+  form.append('parent_phone', data.parent_phone);
+  form.append('parent_relationship', data.parent_relationship);
   if (data.file) form.append('document', data.file);
   return api.postForm<ExeatRequest>('/requests', form);
 }
-
 
 export async function updateRequest(
   requestId: string,
@@ -74,17 +73,22 @@ export async function getRequestById(requestId: string): Promise<ExeatRequest | 
   return api.get<ExeatRequest>(`/requests/${requestId}`);
 }
 
-export async function getAllRequests(filters?: { status?: RequestStatus; search?: string }): Promise<ExeatRequest[]> {
+export async function getAllRequests(filters?: {
+  status?: RequestStatus;
+  search?: string;
+  todayOnly?: boolean;       // ✅ new
+}): Promise<ExeatRequest[]> {
   const params = new URLSearchParams();
-  if (filters?.status) params.append('status', filters.status);
-  if (filters?.search) params.append('search', filters.search);
+  if (filters?.status)    params.append('status', filters.status);
+  if (filters?.search)    params.append('search', filters.search);
+  if (filters?.todayOnly) params.append('todayOnly', 'true');  // ✅ new
   const qs = params.toString() ? `?${params}` : '';
   return api.get<ExeatRequest[]>(`/requests/all${qs}`);
 }
 
 export async function getAdminStats() {
   return api.get<{
-    total: number; pendingHallAdmin: number; pendingDean: number;
+    total: number; todayTotal: number; pendingHallAdmin: number; pendingDean: number;
     approvedFinal: number; checkedOut: number; checkedIn: number; rejected: number;
   }>('/requests/admin/stats');
 }
@@ -123,7 +127,6 @@ export async function checkIn(requestId: string, _securityId: string): Promise<v
 
 export async function getDocumentUrl(path: string): Promise<string> {
   const token = getToken();
-  // Serve from Express static files
   return `${BASE.replace('/api', '')}/uploads/${path}${token ? `?token=${token}` : ''}`;
 }
 

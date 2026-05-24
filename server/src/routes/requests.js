@@ -219,34 +219,40 @@ router.get('/all', protect, requireRole('hall_admin', 'dean', 'security'), async
 
 // ── Admin: Stats ────────────────────────────────────────────────────────────
 
-router.get('/admin/stats', protect, requireRole('hall_admin', 'dean'), async (req, res) => {
+router.get('/all', protect, requireRole('hall_admin', 'dean', 'security'), async (req, res) => {
   try {
-    const all = await ExeatRequest.find().select('status created_at');
+    const filter = {};
 
-    // Today's requests — only PENDING ones created today
-    const startOfDay = new Date();
-    startOfDay.setHours(0, 0, 0, 0);
-    // ✅ Fix — count ALL requests created today
-    const todayTotal = all.filter(r =>
-      new Date(r.created_at) >= startOfDay
-    ).length;
+    if (req.query.status) {
+      filter.status = req.query.status;
+    } else if (req.user.role === 'hall_admin' || req.user.role === 'dean') {
+      filter.status = { $nin: ['CHECKED_OUT', 'CHECKED_IN'] };
+    }
 
-    res.json({
-      total: all.length,
-      todayTotal,                                // ← requests pending hall admin created today
-      pendingHallAdmin: all.filter(r =>
-        r.status === 'PENDING_HALL_ADMIN'        // ✅ only truly pending, not approved
-      ).length,
-      pendingDean: all.filter(r =>
-        r.status === 'APPROVED_BY_HALL_ADMIN'    // ✅ awaiting dean, not yet approved/rejected
-      ).length,
-      approvedFinal: all.filter(r => r.status === 'APPROVED_FINAL').length,
-      checkedOut: all.filter(r => r.status === 'CHECKED_OUT').length,
-      checkedIn: all.filter(r => r.status === 'CHECKED_IN').length,
-      rejected: all.filter(r =>
-        ['REJECTED_BY_HALL_ADMIN', 'REJECTED_BY_DEAN'].includes(r.status)
-      ).length,
-    });
+    // ✅ Filter by today if todayOnly param is passed
+    if (req.query.todayOnly === 'true') {
+      const startOfDay = new Date();
+      startOfDay.setUTCHours(0, 0, 0, 0);
+      filter.created_at = { $gte: startOfDay };
+    }
+
+    let requests = await ExeatRequest.find(filter)
+      .populate('student_id', 'full_name crawford_number role')
+      .sort({ created_at: -1 });
+
+    if (req.query.search) {
+      const s = req.query.search.toLowerCase();
+      requests = requests.filter(r => {
+        const profile = r.student_id;
+        return (
+          profile?.full_name?.toLowerCase().includes(s) ||
+          profile?.crawford_number?.toLowerCase().includes(s) ||
+          r.destination?.toLowerCase().includes(s)
+        );
+      });
+    }
+
+    res.json(requests.map(formatRequest));
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
@@ -316,7 +322,7 @@ router.get('/admin/stats', protect, requireRole('hall_admin', 'dean'), async (re
 
     // Today's requests
     const startOfDay = new Date();
-    startOfDay.setUTCHours(0, 0, 0, 0);
+    startOfDay.sehHours(0, 0, 0, 0);
     const todayTotal = all.filter(r => new Date(r.created_at) >= startOfDay).length;
 
     res.json({

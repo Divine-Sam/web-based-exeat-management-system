@@ -204,7 +204,7 @@ export function DashboardPage() {
                 icon: <FileText className="w-5 h-5 text-blue-600" />,
                 color: 'text-blue-600', bg: 'bg-blue-50',
                 sub: 'Total requests submitted today',
-                to: '/admin/requests?status=PENDING_HALL_ADMIN',
+                to: '/admin/requests?filter=today',
               }} />
 
               {/* ✅ APPROVED_BY_HALL_ADMIN — moved on, awaiting dean */}
@@ -224,12 +224,12 @@ export function DashboardPage() {
                 icon: <Clock className="w-5 h-5 text-amber-600" />,
                 color: 'text-amber-600', bg: 'bg-amber-50',
                 sub: 'Requests you are yet to attend to',
-                to: '/admin/requests?status=PENDING_HALL_ADMIN',
+               to: '/admin/requests?filter=today',
               }} />
             </div>
 
             <Link
-              to="/admin/requests?status=PENDING_HALL_ADMIN"
+             to: '/admin/requests?filter=today',
               className="flex items-center justify-between bg-blue-600 hover:bg-blue-700 text-white rounded-2xl p-5 transition-colors shadow-sm shadow-blue-200 group"
             >
               <div>
