@@ -15,7 +15,7 @@ const PORT = process.env.PORT || 5000;
 app.use(cors({
   origin: [
     'http://localhost:5173',
-    'https://web-based-exeat-management-system.onrender.com',
+    'https://web-based-exeat-management-system-c.vercel.app',
   ],
   credentials: true,
 }));
