@@ -76,12 +76,12 @@ export async function getRequestById(requestId: string): Promise<ExeatRequest | 
 export async function getAllRequests(filters?: {
   status?: RequestStatus;
   search?: string;
-  todayOnly?: boolean;       // ✅ new
+  todayOnly?: boolean;
 }): Promise<ExeatRequest[]> {
   const params = new URLSearchParams();
   if (filters?.status)    params.append('status', filters.status);
   if (filters?.search)    params.append('search', filters.search);
-  if (filters?.todayOnly) params.append('todayOnly', 'true');  // ✅ new
+  if (filters?.todayOnly) params.append('todayOnly', 'true');
   const qs = params.toString() ? `?${params}` : '';
   return api.get<ExeatRequest[]>(`/requests/all${qs}`);
 }
