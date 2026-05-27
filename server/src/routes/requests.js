@@ -178,7 +178,7 @@ router.get('/my/stats', protect, requireRole('student'), async (req, res) => {
 });
 
 // ── Admin: Stats ───────────────────────────────────────────────────────────
-router.get('/admin/stats', protect, requireRole('hall_admin', 'dean'), async (req, res) => {
+router.get('/admin/stats', protect, requireRole('hall_admin', 'dean', 'security'), async (req, res) => {
   try {
     const all = await ExeatRequest.find().select('status created_at');
 

@@ -4,7 +4,7 @@ const { protect, requireRole } = require('../middleware/auth');
 
 const router = express.Router();
 
-router.get('/', protect, requireRole('hall_admin', 'dean'), async (req, res) => {
+router.get('/', protect, requireRole('hall_admin', 'dean','security'), async (req, res) => {
   try {
     const logs = await AuditLog.find()
       .populate('user_id', 'full_name crawford_number role')
