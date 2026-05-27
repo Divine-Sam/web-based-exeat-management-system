@@ -1,3 +1,5 @@
+const mongoose = require('mongoose');
+
 const exeatRequestSchema = new mongoose.Schema({
   student_id: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
   destination: { type: String, required: true, trim: true },
@@ -36,3 +38,5 @@ const exeatRequestSchema = new mongoose.Schema({
   checkout_time: { type: Date, default: null },
   checkin_time: { type: Date, default: null },
 }, { timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' } });
+
+module.exports = mongoose.model('ExeatRequest', exeatRequestSchema);
