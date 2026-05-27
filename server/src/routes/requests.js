@@ -1,378 +1,368 @@
-import { api } from '../lib/api';
-import { ReactNode, useState, useEffect } from 'react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
-import {
-  LayoutDashboard,
-  FileText,
-  PlusCircle,
-  ClipboardList,
-  Shield,
-  LogOut,
-  Menu,
-  X,
-  Clock,
-  CheckCircle,
-  ArrowRight,
-  Users,
-  AlertTriangle,
-} from 'lucide-react';
+const express = require('express');
+const ExeatRequest = require('../models/ExeatRequest');
+const { protect, requireRole } = require('../middleware/auth');
+const upload = require('../middleware/upload');
+const { getCurrentAcademicSession, logAudit } = require('../utils/helpers');
 
-interface StatCard {
-  label: string;
-  value: number;
-  icon: ReactNode;
-  color: string;
-  bg: string;
-  sub: string;
-  to: string;
+const router = express.Router();
+
+function calcDays(dep, ret) {
+  return Math.ceil((new Date(ret) - new Date(dep)) / (1000 * 60 * 60 * 24));
 }
 
-interface DashboardStats {
-  todayTotal: number;
-  pendingHallAdmin: number;
-  pendingDean: number;
-  approvedFinal: number;
-  checkedOut: number;
-  checkedIn: number;
+async function populatedRequest(id) {
+  return ExeatRequest.findById(id).populate('student_id', 'full_name crawford_number role');
 }
 
-function StatCardItem({ card }: { card: StatCard }) {
-  return (
-    <Link
-      to={card.to}
-      className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 hover:shadow-md transition-shadow flex flex-col gap-3"
-    >
-      <div className="flex items-center justify-between">
-        <span className="text-sm font-medium text-gray-500">{card.label}</span>
-        <span className={`p-2 rounded-xl ${card.bg}`}>{card.icon}</span>
-      </div>
-      <div>
-        <p className={`text-3xl font-bold ${card.color}`}>{card.value}</p>
-        <p className="text-xs text-gray-400 mt-1">{card.sub}</p>
-      </div>
-    </Link>
-  );
+function formatRequest(r) {
+  if (!r) return null;
+  const obj = r.toObject ? r.toObject() : r;
+  const student = obj.student_id;
+  return {
+    ...obj,
+    id: obj._id?.toString(),
+    student_id: student?._id?.toString() || obj.student_id?.toString(),
+    profiles: student ? {
+      id: student._id?.toString(),
+      full_name: student.full_name,
+      crawford_number: student.crawford_number,
+      role: student.role,
+    } : undefined,
+  };
 }
 
-export default function DashboardPage() {
-  const { user, logout } = useAuth();
-  const navigate = useNavigate();
-  const location = useLocation();
-  const role = user?.role;
+// ── Student: Create ────────────────────────────────────────────────────────
+router.post('/', protect, requireRole('student'), upload.single('document'), async (req, res) => {
+  try {
+    const {
+      destination, reason_description, reason_category,
+      departure_date, return_date,
+      parent_name, parent_phone, parent_relationship
+    } = req.body;
 
-  const [stats, setStats] = useState<DashboardStats>({
-    todayTotal: 0,
-    pendingHallAdmin: 0,
-    pendingDean: 0,
-    approvedFinal: 0,
-    checkedOut: 0,
-    checkedIn: 0,
-  });
-  const [loadingStats, setLoadingStats] = useState(true);
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-
-  useEffect(() => {
-    if (role === 'hall_admin' || role === 'dean' || role === 'security') {
-      fetchStats();
+    if (!destination || !reason_description || !reason_category ||
+        !departure_date || !return_date ||
+        !parent_name || !parent_phone || !parent_relationship) {
+      return res.status(400).json({ message: 'All fields are required.' });
     }
-  }, [role]);
 
-  async function fetchStats() {
-    try {
-      setLoadingStats(true);
-      const data = await api.get('/requests/stats');
-      setStats(data);
-    } catch (err) {
-      console.error('Failed to load stats', err);
-    } finally {
-      setLoadingStats(false);
+    const session = getCurrentAcademicSession();
+    const studentId = req.user._id;
+
+    const count = await ExeatRequest.countDocuments({ student_id: studentId, academic_session: session });
+    if (count >= 5) return res.status(400).json({ message: 'Maximum exeat request limit for this session has been reached.' });
+
+    const totalDays = calcDays(departure_date, return_date);
+    if (totalDays <= 0) return res.status(400).json({ message: 'Return date must be after departure date.' });
+    if (totalDays > 5)  return res.status(400).json({ message: 'Exeat duration cannot exceed 5 days.' });
+
+    const overlaps = await ExeatRequest.findOne({
+      student_id: studentId,
+      status: { $in: ['PENDING_HALL_ADMIN', 'APPROVED_BY_HALL_ADMIN', 'APPROVED_FINAL', 'CHECKED_OUT'] },
+      departure_date: { $lte: return_date },
+      return_date:    { $gte: departure_date },
+    });
+    if (overlaps) return res.status(400).json({ message: 'You already have an active exeat within the selected dates.' });
+    if (!req.file) return res.status(400).json({ message: 'Supporting document is required.' });
+
+    const request = await ExeatRequest.create({
+      student_id: studentId,
+      destination,
+      reason_description,
+      reason_category,
+      departure_date,
+      return_date,
+      total_days: totalDays,
+      academic_session: session,
+      parent_name,
+      parent_phone,
+      parent_relationship,
+      supporting_document_path: req.file.filename,
+      supporting_document_name: req.file.originalname,
+      status: 'PENDING_HALL_ADMIN',
+    });
+
+    await logAudit(studentId, 'REQUEST_CREATED', request._id, null, 'PENDING_HALL_ADMIN');
+    const populated = await populatedRequest(request._id);
+    res.status(201).json(formatRequest(populated));
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// ── Student: Update ────────────────────────────────────────────────────────
+router.put('/:id', protect, requireRole('student'), upload.single('document'), async (req, res) => {
+  try {
+    const existing = await ExeatRequest.findOne({ _id: req.params.id, student_id: req.user._id });
+    if (!existing) return res.status(404).json({ message: 'Request not found.' });
+    if (existing.status !== 'PENDING_HALL_ADMIN') return res.status(400).json({ message: 'Only pending requests can be edited.' });
+
+    const { destination, reason_description, reason_category, departure_date, return_date } = req.body;
+    const totalDays = calcDays(departure_date, return_date);
+    if (totalDays <= 0) return res.status(400).json({ message: 'Return date must be after departure date.' });
+    if (totalDays > 5)  return res.status(400).json({ message: 'Exeat duration cannot exceed 5 days.' });
+
+    const overlaps = await ExeatRequest.findOne({
+      student_id: req.user._id,
+      _id: { $ne: existing._id },
+      status: { $in: ['PENDING_HALL_ADMIN', 'APPROVED_BY_HALL_ADMIN', 'APPROVED_FINAL', 'CHECKED_OUT'] },
+      departure_date: { $lte: return_date },
+      return_date:    { $gte: departure_date },
+    });
+    if (overlaps) return res.status(400).json({ message: 'You already have an active exeat within the selected dates.' });
+
+    existing.destination        = destination;
+    existing.reason_description = reason_description;
+    existing.reason_category    = reason_category;
+    existing.departure_date     = departure_date;
+    existing.return_date        = return_date;
+    existing.total_days         = totalDays;
+
+    if (req.file) {
+      existing.supporting_document_path = req.file.filename;
+      existing.supporting_document_name = req.file.originalname;
     }
+
+    await existing.save();
+    await logAudit(req.user._id, 'REQUEST_EDITED', existing._id, 'PENDING_HALL_ADMIN', 'PENDING_HALL_ADMIN');
+    const populated = await populatedRequest(existing._id);
+    res.json(formatRequest(populated));
+  } catch (err) {
+    res.status(500).json({ message: err.message });
   }
+});
 
-  function handleLogout() {
-    logout();
-    navigate('/login');
+// ── Student: Cancel ────────────────────────────────────────────────────────
+router.delete('/:id', protect, requireRole('student'), async (req, res) => {
+  try {
+    const request = await ExeatRequest.findOne({ _id: req.params.id, student_id: req.user._id });
+    if (!request) return res.status(404).json({ message: 'Request not found.' });
+    if (request.status !== 'PENDING_HALL_ADMIN') return res.status(400).json({ message: 'Only pending requests can be cancelled.' });
+
+    await logAudit(req.user._id, 'REQUEST_CANCELLED', request._id, 'PENDING_HALL_ADMIN', null);
+    await request.deleteOne();
+    res.json({ message: 'Request cancelled.' });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
   }
+});
 
-  const navItems = [
-    { label: 'Dashboard', icon: <LayoutDashboard className="w-4 h-4" />, to: '/dashboard' },
-    ...(role === 'student'
-      ? [
-          { label: 'My Requests', icon: <FileText className="w-4 h-4" />, to: '/requests' },
-          { label: 'New Request', icon: <PlusCircle className="w-4 h-4" />, to: '/requests/new' },
-        ]
-      : []),
-    ...(role === 'hall_admin' || role === 'dean'
-      ? [{ label: 'All Requests', icon: <ClipboardList className="w-4 h-4" />, to: '/admin/requests' }]
-      : []),
-    ...(role === 'security'
-      ? [{ label: 'Security Gate', icon: <Shield className="w-4 h-4" />, to: '/security' }]
-      : []),
-  ];
+// ── Student: My Requests ───────────────────────────────────────────────────
+router.get('/my', protect, requireRole('student'), async (req, res) => {
+  try {
+    const requests = await ExeatRequest.find({ student_id: req.user._id })
+      .populate('student_id', 'full_name crawford_number role')
+      .sort({ created_at: -1 });
+    res.json(requests.map(formatRequest));
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
 
-  return (
-    <div className="min-h-screen bg-gray-50 flex">
-      {/* Sidebar */}
-      <aside
-        className={`fixed inset-y-0 left-0 z-40 w-60 bg-white border-r border-gray-100 shadow-sm flex flex-col transition-transform duration-200
-          ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0 md:static md:flex`}
-      >
-        <div className="px-6 py-5 border-b border-gray-100">
-          <p className="font-bold text-lg text-gray-800">Exeat Portal</p>
-          <p className="text-xs text-gray-400 mt-0.5 capitalize">{role?.replace('_', ' ')}</p>
-        </div>
+// ── Student: Stats ─────────────────────────────────────────────────────────
+router.get('/my/stats', protect, requireRole('student'), async (req, res) => {
+  try {
+    const session = getCurrentAcademicSession();
+    const all = await ExeatRequest.find({ student_id: req.user._id, academic_session: session }).select('status');
+    res.json({
+      total:     all.length,
+      pending:   all.filter(r => ['PENDING_HALL_ADMIN', 'APPROVED_BY_HALL_ADMIN'].includes(r.status)).length,
+      approved:  all.filter(r => ['APPROVED_FINAL', 'CHECKED_OUT', 'CHECKED_IN'].includes(r.status)).length,
+      rejected:  all.filter(r => ['REJECTED_BY_HALL_ADMIN', 'REJECTED_BY_DEAN'].includes(r.status)).length,
+      remaining: Math.max(0, 5 - all.length),
+      session,
+    });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
 
-        <nav className="flex-1 px-3 py-4 flex flex-col gap-1">
-          {navItems.map((item) => (
-            <Link
-              key={item.to}
-              to={item.to}
-              onClick={() => setSidebarOpen(false)}
-              className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors
-                ${location.pathname === item.to
-                  ? 'bg-blue-50 text-blue-600'
-                  : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'}`}
-            >
-              {item.icon}
-              {item.label}
-            </Link>
-          ))}
-        </nav>
+// ── Admin: Stats ───────────────────────────────────────────────────────────
+router.get('/admin/stats', protect, requireRole('hall_admin', 'dean'), async (req, res) => {
+  try {
+    const all = await ExeatRequest.find().select('status created_at');
 
-        <div className="px-3 py-4 border-t border-gray-100">
-          <button
-            onClick={handleLogout}
-            className="flex items-center gap-3 px-3 py-2.5 w-full rounded-xl text-sm font-medium text-gray-600 hover:bg-red-50 hover:text-red-600 transition-colors"
-          >
-            <LogOut className="w-4 h-4" />
-            Log Out
-          </button>
-        </div>
-      </aside>
+    const startOfDay = new Date();
+    startOfDay.setUTCHours(0, 0, 0, 0);
+    const endOfDay = new Date();
+    endOfDay.setUTCHours(23, 59, 59, 999);
 
-      {/* Overlay for mobile */}
-      {sidebarOpen && (
-        <div
-          className="fixed inset-0 z-30 bg-black/20 md:hidden"
-          onClick={() => setSidebarOpen(false)}
-        />
-      )}
+    const todayTotal = all.filter(r => {
+      const d = new Date(r.created_at);
+      return d >= startOfDay && d <= endOfDay;
+    }).length;
 
-      {/* Main content */}
-      <div className="flex-1 flex flex-col min-w-0">
-        {/* Top bar */}
-        <header className="bg-white border-b border-gray-100 px-4 md:px-8 py-4 flex items-center gap-4">
-          <button
-            className="md:hidden p-1.5 rounded-lg hover:bg-gray-100"
-            onClick={() => setSidebarOpen((o) => !o)}
-          >
-            {sidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-          </button>
-          <div>
-            <h1 className="font-semibold text-gray-900">
-              Welcome back, {user?.full_name?.split(' ')[0] ?? 'User'}
-            </h1>
-            <p className="text-xs text-gray-400">{new Date().toDateString()}</p>
-          </div>
-        </header>
+    res.json({
+      total:            all.length,
+      todayTotal,
+      pendingHallAdmin: all.filter(r => r.status === 'PENDING_HALL_ADMIN').length,
+      pendingDean:      all.filter(r => r.status === 'APPROVED_BY_HALL_ADMIN').length,
+      approvedFinal:    all.filter(r => r.status === 'APPROVED_FINAL').length,
+      checkedOut:       all.filter(r => r.status === 'CHECKED_OUT').length,
+      checkedIn:        all.filter(r => r.status === 'CHECKED_IN').length,
+      rejected:         all.filter(r => ['REJECTED_BY_HALL_ADMIN', 'REJECTED_BY_DEAN'].includes(r.status)).length,
+    });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
 
-        {/* Page body */}
-        <main className="flex-1 px-4 md:px-8 py-6 flex flex-col gap-6">
+// ── Admin: All Requests ────────────────────────────────────────────────────
+router.get('/all', protect, requireRole('hall_admin', 'dean', 'security'), async (req, res) => {
+  try {
+    const filter = {};
 
-          {/* ── Student view ──────────────────────────────── */}
-          {role === 'student' && (
-            <div className="flex flex-col gap-4">
-              <p className="text-gray-600 text-sm">
-                Submit and track your exeat requests below.
-              </p>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <Link
-                  to="/requests/new"
-                  className="flex items-center justify-between bg-blue-600 hover:bg-blue-700 text-white rounded-2xl p-5 transition-colors shadow-sm shadow-blue-200 group"
-                >
-                  <div>
-                    <p className="font-semibold">New Exeat Request</p>
-                    <p className="text-blue-200 text-sm mt-0.5">Submit a new leave request</p>
-                  </div>
-                  <PlusCircle className="w-6 h-6 group-hover:scale-110 transition-transform" />
-                </Link>
+    // Today only filter — overrides everything else
+    if (req.query.todayOnly === 'true') {
+      const startOfDay = new Date();
+      startOfDay.setUTCHours(0, 0, 0, 0);
+      const endOfDay = new Date();
+      endOfDay.setUTCHours(23, 59, 59, 999);
+      filter.created_at = { $gte: startOfDay, $lte: endOfDay };
+    }
+    // Specific status filter
+    else if (req.query.status) {
+      filter.status = req.query.status;
+    }
+    // Default — hall_admin and dean never see CHECKED_OUT or CHECKED_IN
+    else if (req.user.role === 'hall_admin' || req.user.role === 'dean') {
+      filter.status = { $nin: ['CHECKED_OUT', 'CHECKED_IN'] };
+    }
 
-                <Link
-                  to="/requests"
-                  className="flex items-center justify-between bg-white hover:bg-gray-50 border border-gray-100 rounded-2xl p-5 transition-colors shadow-sm group"
-                >
-                  <div>
-                    <p className="font-semibold text-gray-800">My Requests</p>
-                    <p className="text-gray-400 text-sm mt-0.5">Track your request history</p>
-                  </div>
-                  <ArrowRight className="w-5 h-5 text-gray-400 group-hover:translate-x-1 transition-transform" />
-                </Link>
-              </div>
-            </div>
-          )}
+    let requests = await ExeatRequest.find(filter)
+      .populate('student_id', 'full_name crawford_number role')
+      .sort({ created_at: -1 });
 
-          {/* ── Hall Admin stats ──────────────────────────── */}
-          {role === 'hall_admin' && (
-            <>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+    // Search
+    if (req.query.search) {
+      const s = req.query.search.toLowerCase();
+      requests = requests.filter(r => {
+        const p = r.student_id;
+        return (
+          p?.full_name?.toLowerCase().includes(s) ||
+          p?.crawford_number?.toLowerCase().includes(s) ||
+          r.destination?.toLowerCase().includes(s)
+        );
+      });
+    }
 
-                {/* Requests Today */}
-                <StatCardItem card={{
-                  label: 'Requests Today',
-                  value: stats.todayTotal ?? 0,
-                  icon: <FileText className="w-5 h-5 text-blue-600" />,
-                  color: 'text-blue-600',
-                  bg: 'bg-blue-50',
-                  sub: 'New requests received today',
-                  to: '/admin/requests?todayOnly=true',
-                }} />
+    res.json(requests.map(formatRequest));
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
 
-                {/* Awaiting Dean */}
-                <StatCardItem card={{
-                  label: 'Awaiting Dean Approval',
-                  value: stats.pendingDean,
-                  icon: <Users className="w-5 h-5 text-blue-500" />,
-                  color: 'text-blue-500',
-                  bg: 'bg-blue-50',
-                  sub: 'Approved by you — pending dean',
-                  to: '/admin/requests?status=APPROVED_BY_HALL_ADMIN',
-                }} />
+// ── Shared: Get by ID ──────────────────────────────────────────────────────
+router.get('/:id', protect, async (req, res) => {
+  try {
+    const request = await ExeatRequest.findById(req.params.id)
+      .populate('student_id', 'full_name crawford_number role');
+    if (!request) return res.status(404).json({ message: 'Request not found.' });
+    if (req.user.role === 'student' && request.student_id._id.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: 'Access denied.' });
+    }
+    res.json(formatRequest(request));
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
 
-                {/* Pending Your Review */}
-                <StatCardItem card={{
-                  label: 'Pending Your Review',
-                  value: stats.pendingHallAdmin,
-                  icon: <Clock className="w-5 h-5 text-amber-600" />,
-                  color: 'text-amber-600',
-                  bg: 'bg-amber-50',
-                  sub: 'Requests awaiting your action',
-                  to: '/admin/requests?status=PENDING_HALL_ADMIN',
-                }} />
-              </div>
+// ── Hall Admin: Approve ────────────────────────────────────────────────────
+router.post('/:id/hall-approve', protect, requireRole('hall_admin'), async (req, res) => {
+  try {
+    const request = await ExeatRequest.findById(req.params.id);
+    if (!request) return res.status(404).json({ message: 'Request not found.' });
+    if (request.status !== 'PENDING_HALL_ADMIN') return res.status(400).json({ message: 'Request must be pending Hall Admin review.' });
+    request.status           = 'APPROVED_BY_HALL_ADMIN';
+    request.hall_admin_comment = req.body.comment || '';
+    await request.save();
+    await logAudit(req.user._id, 'HALL_ADMIN_APPROVED', request._id, 'PENDING_HALL_ADMIN', 'APPROVED_BY_HALL_ADMIN', req.body.comment);
+    res.json({ message: 'Approved by Hall Admin.' });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
 
-              <Link
-                to="/admin/requests?status=PENDING_HALL_ADMIN"
-                className="flex items-center justify-between bg-blue-600 hover:bg-blue-700 text-white rounded-2xl p-5 transition-colors shadow-sm shadow-blue-200 group"
-              >
-                <div>
-                  <p className="font-semibold">Review Pending Requests</p>
-                  <p className="text-blue-200 text-sm mt-0.5">
-                    {stats.pendingHallAdmin} request(s) pending your review
-                  </p>
-                </div>
-                <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-              </Link>
-            </>
-          )}
+// ── Hall Admin: Reject ─────────────────────────────────────────────────────
+router.post('/:id/hall-reject', protect, requireRole('hall_admin'), async (req, res) => {
+  try {
+    const request = await ExeatRequest.findById(req.params.id);
+    if (!request) return res.status(404).json({ message: 'Request not found.' });
+    if (request.status !== 'PENDING_HALL_ADMIN') return res.status(400).json({ message: 'Request must be pending Hall Admin review.' });
+    if (!req.body.comment?.trim()) return res.status(400).json({ message: 'Rejection reason is required.' });
+    request.status             = 'REJECTED_BY_HALL_ADMIN';
+    request.hall_admin_comment = req.body.comment;
+    await request.save();
+    await logAudit(req.user._id, 'HALL_ADMIN_REJECTED', request._id, 'PENDING_HALL_ADMIN', 'REJECTED_BY_HALL_ADMIN', req.body.comment);
+    res.json({ message: 'Rejected by Hall Admin.' });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
 
-          {/* ── Dean stats ────────────────────────────────── */}
-          {role === 'dean' && (
-            <>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+// ── Dean: Approve ──────────────────────────────────────────────────────────
+router.post('/:id/dean-approve', protect, requireRole('dean'), async (req, res) => {
+  try {
+    const request = await ExeatRequest.findById(req.params.id);
+    if (!request) return res.status(404).json({ message: 'Request not found.' });
+    if (request.status !== 'APPROVED_BY_HALL_ADMIN') return res.status(400).json({ message: 'Request must be approved by Hall Admin first.' });
+    request.status       = 'APPROVED_FINAL';
+    request.dean_comment = req.body.comment || '';
+    await request.save();
+    await logAudit(req.user._id, 'DEAN_APPROVED', request._id, 'APPROVED_BY_HALL_ADMIN', 'APPROVED_FINAL', req.body.comment);
+    res.json({ message: 'Final approval granted by Dean.' });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
 
-                {/* Requests Today */}
-                <StatCardItem card={{
-                  label: 'Requests Today',
-                  value: stats.todayTotal ?? 0,
-                  icon: <FileText className="w-5 h-5 text-blue-600" />,
-                  color: 'text-blue-600',
-                  bg: 'bg-blue-50',
-                  sub: 'New requests received today',
-                  to: '/admin/requests?todayOnly=true',
-                }} />
+// ── Dean: Reject ───────────────────────────────────────────────────────────
+router.post('/:id/dean-reject', protect, requireRole('dean'), async (req, res) => {
+  try {
+    const request = await ExeatRequest.findById(req.params.id);
+    if (!request) return res.status(404).json({ message: 'Request not found.' });
+    if (request.status !== 'APPROVED_BY_HALL_ADMIN') return res.status(400).json({ message: 'Request must be approved by Hall Admin first.' });
+    if (!req.body.comment?.trim()) return res.status(400).json({ message: 'Rejection reason is required.' });
+    request.status       = 'REJECTED_BY_DEAN';
+    request.dean_comment = req.body.comment;
+    await request.save();
+    await logAudit(req.user._id, 'DEAN_REJECTED', request._id, 'APPROVED_BY_HALL_ADMIN', 'REJECTED_BY_DEAN', req.body.comment);
+    res.json({ message: 'Rejected by Dean.' });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
 
-                {/* Pending Your Approval */}
-                <StatCardItem card={{
-                  label: 'Pending Your Approval',
-                  value: stats.pendingDean,
-                  icon: <Clock className="w-5 h-5 text-amber-600" />,
-                  color: 'text-amber-600',
-                  bg: 'bg-amber-50',
-                  sub: 'Awaiting your final decision',
-                  to: '/admin/requests?status=APPROVED_BY_HALL_ADMIN',
-                }} />
+// ── Security: Check Out ────────────────────────────────────────────────────
+router.post('/:id/checkout', protect, requireRole('security'), async (req, res) => {
+  try {
+    const request = await ExeatRequest.findById(req.params.id);
+    if (!request) return res.status(404).json({ message: 'Request not found.' });
+    if (request.status !== 'APPROVED_FINAL') return res.status(400).json({ message: 'Request must have final approval before check-out.' });
+    request.status        = 'CHECKED_OUT';
+    request.checkout_time = new Date();
+    await request.save();
+    await logAudit(req.user._id, 'CHECKED_OUT', request._id, 'APPROVED_FINAL', 'CHECKED_OUT');
+    res.json({ message: 'Student checked out.' });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
 
-                {/* Final Approved */}
-                <StatCardItem card={{
-                  label: 'Final Approved',
-                  value: stats.approvedFinal,
-                  icon: <CheckCircle className="w-5 h-5 text-emerald-600" />,
-                  color: 'text-emerald-600',
-                  bg: 'bg-emerald-50',
-                  sub: 'Fully approved requests',
-                  to: '/admin/requests?status=APPROVED_FINAL',
-                }} />
-              </div>
+// ── Security: Check In ─────────────────────────────────────────────────────
+router.post('/:id/checkin', protect, requireRole('security'), async (req, res) => {
+  try {
+    const request = await ExeatRequest.findById(req.params.id);
+    if (!request) return res.status(404).json({ message: 'Request not found.' });
+    if (request.status !== 'CHECKED_OUT') return res.status(400).json({ message: 'Student must be checked out before checking in.' });
+    request.status       = 'CHECKED_IN';
+    request.checkin_time = new Date();
+    await request.save();
+    await logAudit(req.user._id, 'CHECKED_IN', request._id, 'CHECKED_OUT', 'CHECKED_IN');
+    res.json({ message: 'Student checked in.' });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
 
-              <Link
-                to="/admin/requests?status=APPROVED_BY_HALL_ADMIN"
-                className="flex items-center justify-between bg-blue-600 hover:bg-blue-700 text-white rounded-2xl p-5 transition-colors shadow-sm shadow-blue-200 group"
-              >
-                <div>
-                  <p className="font-semibold">Review Pending Requests</p>
-                  <p className="text-blue-200 text-sm mt-0.5">
-                    {stats.pendingDean} request(s) awaiting your final approval
-                  </p>
-                </div>
-                <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-              </Link>
-            </>
-          )}
-
-          {/* ── Security stats ────────────────────────────── */}
-          {role === 'security' && (
-            <>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-
-                <StatCardItem card={{
-                  label: 'Requests Today',
-                  value: stats.todayTotal ?? 0,
-                  icon: <FileText className="w-5 h-5 text-blue-600" />,
-                  color: 'text-blue-600',
-                  bg: 'bg-blue-50',
-                  sub: 'All requests submitted today',
-                  to: '/security?todayOnly=true',
-                }} />
-
-                <StatCardItem card={{
-                  label: 'Checked Out',
-                  value: stats.checkedOut,
-                  icon: <AlertTriangle className="w-5 h-5 text-orange-500" />,
-                  color: 'text-orange-500',
-                  bg: 'bg-orange-50',
-                  sub: 'Students currently off campus',
-                  to: '/security?status=CHECKED_OUT',
-                }} />
-
-                <StatCardItem card={{
-                  label: 'Fully Approved',
-                  value: stats.approvedFinal,
-                  icon: <CheckCircle className="w-5 h-5 text-emerald-600" />,
-                  color: 'text-emerald-600',
-                  bg: 'bg-emerald-50',
-                  sub: 'Ready for check-out',
-                  to: '/security?status=APPROVED_FINAL',
-                }} />
-              </div>
-
-              <Link
-                to="/security"
-                className="flex items-center justify-between bg-blue-600 hover:bg-blue-700 text-white rounded-2xl p-5 transition-colors shadow-sm shadow-blue-200 group"
-              >
-                <div>
-                  <p className="font-semibold">Open Security Gate</p>
-                  <p className="text-blue-200 text-sm mt-0.5">
-                    Scan or search students for check-in / check-out
-                  </p>
-                </div>
-                <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-              </Link>
-            </>
-          )}
-
-        </main>
-      </div>
-    </div>
-  );
-}
+module.exports = router;
