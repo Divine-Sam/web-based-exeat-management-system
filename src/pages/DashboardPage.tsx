@@ -251,13 +251,14 @@ export function DashboardPage() {
                 to: '/admin/requests?status=APPROVED_BY_HALL_ADMIN',
               }} />
               <StatCardItem card={{
-                label: 'Final Approved',
-                value: stats.approvedFinal as number,
-                icon: <CheckCircle className="w-5 h-5 text-emerald-600" />,
-                color: 'text-emerald-600', bg: 'bg-emerald-50',
-                sub: 'Fully approved requests',
-                to: '/admin/requests?status=APPROVED_FINAL',
-              }} />
+  label: 'Total Approved',
+  value: stats.totalApproved as number ?? 0,
+  icon: <CheckCircle className="w-5 h-5 text-emerald-600" />,
+  color: 'text-emerald-600',
+  bg: 'bg-emerald-50',
+  sub: 'All fully approved requests',
+  to: '/admin/requests?status=APPROVED_FINAL',
+}} />
             </div>
 
             <Link

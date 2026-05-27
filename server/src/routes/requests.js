@@ -190,7 +190,10 @@ router.get('/admin/stats', protect, requireRole('hall_admin', 'dean'), async (re
     const todayTotal = all.filter(r => {
   const d = new Date(r.created_at);
   return d >= startOfDay && d <= endOfDay && r.status === 'PENDING_HALL_ADMIN';
-}).length;
+  totalApproved: all.filter(r =>
+  ['APPROVED_FINAL', 'CHECKED_OUT', 'CHECKED_IN'].includes(r.status)
+  ).length;
+  }).length;
 
     res.json({
       total:            all.length,
