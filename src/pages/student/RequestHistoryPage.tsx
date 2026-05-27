@@ -15,15 +15,6 @@ const PENDING_STATUSES = ['PENDING_HALL_ADMIN', 'APPROVED_BY_HALL_ADMIN'];
 const APPROVED_STATUSES = ['APPROVED_FINAL', 'CHECKED_OUT', 'CHECKED_IN'];
 const REJECTED_STATUSES = ['REJECTED_BY_HALL_ADMIN', 'REJECTED_BY_DEAN'];
 
-const STATUS_LABELS: Record<string, string> = {
-  'PENDING_HALL_ADMIN':    'Pending Review',
-  'APPROVED_BY_HALL_ADMIN':'Pending Dean',
-  'APPROVED_FINAL':        'Approved',
-  'REJECTED_BY_HALL_ADMIN':'Rejected',
-  'REJECTED_BY_DEAN':      'Rejected',
-  'CHECKED_OUT':           'Checked Out',
-  'CHECKED_IN':            'Checked In',
-};
 
 const FILTER_OPTIONS = [
   { label: 'All',            value: '' },
