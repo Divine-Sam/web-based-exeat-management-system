@@ -73,7 +73,7 @@ export function SignUpPage() {
                 type="text"
                 value={fullName}
                 onChange={e => setFullName(e.target.value)}
-                placeholder="e.g. John Adeyemi"
+                placeholder="Adisa Divine"
                 className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
               />
             </div>
@@ -84,7 +84,7 @@ export function SignUpPage() {
                 type="text"
                 value={crawfordNumber}
                 onChange={e => setCrawfordNumber(e.target.value)}
-                placeholder="e.g. CU/21/0001"
+                placeholder="Crawford Number"
                 className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
               />
             </div>
