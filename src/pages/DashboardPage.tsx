@@ -301,55 +301,7 @@ export function DashboardPage() {
                 color: 'text-red-500', bg: 'bg-red-50',
                 to: '/security/requests?status=CHECKED_OUT',
               }} />
-              {/* ── Security stats ────────────────────────────── */}
-{role === 'security' && (
-  <>
-    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-      <StatCardItem card={{
-        label: 'Total Requests',
-        value: stats.total as number,
-        icon: <FileText className="w-5 h-5 text-blue-600" />,
-        color: 'text-blue-600', bg: 'bg-blue-50',
-        to: '/security/requests',
-      }} />
-      <StatCardItem card={{
-        label: 'Ready for Check-Out',
-        value: stats.approvedFinal as number,
-        icon: <AlertCircle className="w-5 h-5 text-amber-600" />,
-        color: 'text-amber-600', bg: 'bg-amber-50',
-        to: '/security/requests?status=APPROVED_FINAL',
-      }} />
-      <StatCardItem card={{
-        label: 'Currently Out',
-        value: stats.checkedOut as number,
-        icon: <Shield className="w-5 h-5 text-red-500" />,
-        color: 'text-red-500', bg: 'bg-red-50',
-        to: '/security/requests?status=CHECKED_OUT',
-      }} />
-
-      {/* ✅ New — Checked In card */}
-      <StatCardItem card={{
-        label: 'Checked In',
-        value: stats.checkedIn as number,
-        icon: <CheckCircle className="w-5 h-5 text-emerald-600" />,
-        color: 'text-emerald-600', bg: 'bg-emerald-50',
-        sub: 'Students returned',
-        to: '/security/requests?status=CHECKED_IN',
-      }} />
-    </div>
-
-    <Link
-      to="/security/requests"
-      className="flex items-center justify-between bg-blue-600 hover:bg-blue-700 text-white rounded-2xl p-5 transition-colors shadow-sm shadow-blue-200 group"
-    >
-      <div>
-        <p className="font-semibold">Security Desk</p>
-        <p className="text-blue-200 text-sm mt-0.5">Process check-ins and check-outs</p>
-      </div>
-      <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-    </Link>
-  </>
-)}
+              
             </div>
             <Link
               to="/security/requests"
