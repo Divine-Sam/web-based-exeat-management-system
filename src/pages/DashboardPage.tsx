@@ -179,7 +179,7 @@ export function DashboardPage() {
           <>
             {/* ✅ 4 columns — added Checked In card */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-              <StatCardItem card={{ label: 'Total Requests', value: n('total'), icon: <FileText className="w-5 h-5 text-blue-600" />, color: 'text-blue-600', bg: 'bg-blue-50', to: '/security/requests' }} />
+              <StatCardItem card={{ label: 'Total Requests', value: n('total'), icon: <FileText className="w-5 h-5 text-blue-600" />, color: 'text-blue-600', bg: 'bg-blue-50', sub: 'All requests in the system' }} />
               <StatCardItem card={{ label: 'Ready for Check-Out', value: n('approvedFinal'), icon: <AlertCircle className="w-5 h-5 text-amber-600" />, color: 'text-amber-600', bg: 'bg-amber-50', sub: 'Approved, awaiting exit', to: '/security/requests?status=APPROVED_FINAL' }} />
               <StatCardItem card={{ label: 'Currently Out', value: n('checkedOut'), icon: <Shield className="w-5 h-5 text-red-500" />, color: 'text-red-500', bg: 'bg-red-50', sub: 'Students outside campus', to: '/security/requests?status=CHECKED_OUT' }} />
               {/* ✅ New */}
