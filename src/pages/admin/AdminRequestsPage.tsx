@@ -45,14 +45,16 @@ export function AdminRequestsPage() {
   const [page, setPage]                       = useState(1);
   const PAGE_SIZE = 10;
 
-  useEffect(() => {
+  const searchParamsString = searchParams.toString();
+useEffect(() => { load(); }, [statusFilter, search, searchParamsString]); {
     if (!isToday) {
       setStatusFilter(statusFromUrl);
       setPage(1);
     }
   }, [statusFromUrl, isToday]);
 
-  useEffect(() => { load(); }, [statusFilter, search, isToday]);
+  const searchParamsString = searchParams.toString();
+useEffect(() => { load(); }, [statusFilter, search, searchParamsString]);
 
   async function load() {
     setLoading(true);
