@@ -7,7 +7,7 @@ import { getRequestById, updateRequest, getDocumentUrl } from '../../services/re
 import { ExeatRequest, ReasonCategory } from '../../types';
 import { StatusBadge } from '../../components/StatusBadge';
 import { LoadingSpinner } from '../../components/LoadingSpinner';
-import { ArrowLeft, CreditCard as Edit2, Save, X, FileText, Upload, ExternalLink, Calendar, MapPin, Tag, MessageSquare } from 'lucide-react';
+import { ArrowLeft, CreditCard as Edit2, Save, X, FileText, Upload, ExternalLink, Calendar, MapPin, Tag, MessageSquare, User, Phone } from 'lucide-react';
 
 const CATEGORIES: ReasonCategory[] = ['Medical', 'Family Emergency', 'Official', 'Personal', 'Academic'];
 
@@ -125,32 +125,21 @@ export function RequestDetailPage() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1.5">Destination</label>
-                <input
-                  type="text"
-                  value={destination}
-                  onChange={e => setDestination(e.target.value)}
-                  className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                />
+                <input type="text" value={destination} onChange={e => setDestination(e.target.value)}
+                  className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all" />
               </div>
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1.5">Category</label>
-                <select
-                  value={reasonCategory}
-                  onChange={e => setReasonCategory(e.target.value as ReasonCategory)}
-                  className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all bg-white"
-                >
+                <select value={reasonCategory} onChange={e => setReasonCategory(e.target.value as ReasonCategory)}
+                  className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all bg-white">
                   {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
                 </select>
               </div>
             </div>
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1.5">Reason</label>
-              <textarea
-                value={reasonDescription}
-                onChange={e => setReasonDescription(e.target.value)}
-                rows={3}
-                className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all resize-none"
-              />
+              <textarea value={reasonDescription} onChange={e => setReasonDescription(e.target.value)} rows={3}
+                className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all resize-none" />
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
@@ -173,17 +162,20 @@ export function RequestDetailPage() {
                   <button type="button" onClick={() => setFile(null)} className="text-emerald-400 hover:text-emerald-700"><X className="w-4 h-4" /></button>
                 </div>
               ) : (
-                <button type="button" onClick={() => fileRef.current?.click()} className="flex items-center gap-2 px-4 py-2.5 border-2 border-dashed border-slate-200 rounded-xl w-full hover:border-blue-400 hover:bg-blue-50 transition-all text-sm text-slate-500">
+                <button type="button" onClick={() => fileRef.current?.click()}
+                  className="flex items-center gap-2 px-4 py-2.5 border-2 border-dashed border-slate-200 rounded-xl w-full hover:border-blue-400 hover:bg-blue-50 transition-all text-sm text-slate-500">
                   <Upload className="w-4 h-4" /> Click to upload new document
                 </button>
               )}
               <input ref={fileRef} type="file" accept=".pdf,.jpg,.jpeg,.png" className="hidden" onChange={e => setFile(e.target.files?.[0] ?? null)} />
             </div>
             <div className="flex gap-3 pt-2">
-              <button type="button" onClick={() => setEditing(false)} className="flex-1 py-2.5 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 font-medium transition-colors text-sm flex items-center justify-center gap-2">
+              <button type="button" onClick={() => setEditing(false)}
+                className="flex-1 py-2.5 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 font-medium transition-colors text-sm flex items-center justify-center gap-2">
                 <X className="w-4 h-4" /> Cancel
               </button>
-              <button type="submit" disabled={saving} className="flex-1 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 disabled:bg-blue-300 text-white font-medium transition-colors text-sm flex items-center justify-center gap-2">
+              <button type="submit" disabled={saving}
+                className="flex-1 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 disabled:bg-blue-300 text-white font-medium transition-colors text-sm flex items-center justify-center gap-2">
                 {saving ? <LoadingSpinner size="sm" /> : <Save className="w-4 h-4" />}
                 {saving ? 'Saving...' : 'Save Changes'}
               </button>
@@ -191,28 +183,45 @@ export function RequestDetailPage() {
           </form>
         ) : (
           <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-6 space-y-5">
-            <InfoRow icon={<MapPin className="w-4 h-4" />} label="Destination" value={request.destination} />
-            <InfoRow icon={<Tag className="w-4 h-4" />} label="Category" value={request.reason_category} />
+
+            {/* Request Info */}
+            <InfoRow icon={<MapPin className="w-4 h-4" />}      label="Destination"       value={request.destination} />
+            <InfoRow icon={<Tag className="w-4 h-4" />}         label="Category"          value={request.reason_category} />
             <div>
               <label className="text-xs font-medium text-slate-400 uppercase tracking-wide">Reason</label>
               <p className="mt-1 text-slate-700 text-sm">{request.reason_description}</p>
             </div>
             <div className="grid grid-cols-2 gap-4">
               <InfoRow icon={<Calendar className="w-4 h-4" />} label="Departure" value={new Date(request.departure_date).toLocaleDateString(undefined, { dateStyle: 'long' })} />
-              <InfoRow icon={<Calendar className="w-4 h-4" />} label="Return" value={new Date(request.return_date).toLocaleDateString(undefined, { dateStyle: 'long' })} />
+              <InfoRow icon={<Calendar className="w-4 h-4" />} label="Return"    value={new Date(request.return_date).toLocaleDateString(undefined, { dateStyle: 'long' })} />
             </div>
-            <InfoRow icon={<Calendar className="w-4 h-4" />} label="Duration" value={`${request.total_days} day(s)`} />
+            <InfoRow icon={<Calendar className="w-4 h-4" />} label="Duration"         value={`${request.total_days} day(s)`} />
             <InfoRow icon={<Calendar className="w-4 h-4" />} label="Academic Session" value={request.academic_session} />
 
+            {/* ✅ Parent / Guardian Contact */}
+            {(request.parent_name || request.parent_phone || request.parent_relationship) && (
+              <div className="pt-3 border-t border-slate-100">
+                <p className="text-xs font-semibold text-blue-600 uppercase tracking-wide mb-3">Parent / Guardian Contact</p>
+                <div className="bg-blue-50 border border-blue-100 rounded-xl p-4 space-y-3">
+                  {request.parent_name && (
+                    <InfoRow icon={<User className="w-4 h-4" />}  label="Name"         value={request.parent_name} />
+                  )}
+                  {request.parent_relationship && (
+                    <InfoRow icon={<User className="w-4 h-4" />}  label="Relationship" value={request.parent_relationship} />
+                  )}
+                  {request.parent_phone && (
+                    <InfoRow icon={<Phone className="w-4 h-4" />} label="Phone Number" value={request.parent_phone} />
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Supporting Document */}
             {docUrl && (
               <div>
                 <label className="text-xs font-medium text-slate-400 uppercase tracking-wide">Supporting Document</label>
-                <a
-                  href={docUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="mt-1.5 flex items-center gap-2 px-4 py-2.5 bg-blue-50 border border-blue-100 rounded-xl text-blue-600 hover:bg-blue-100 transition-colors text-sm font-medium"
-                >
+                <a href={docUrl} target="_blank" rel="noopener noreferrer"
+                  className="mt-1.5 flex items-center gap-2 px-4 py-2.5 bg-blue-50 border border-blue-100 rounded-xl text-blue-600 hover:bg-blue-100 transition-colors text-sm font-medium">
                   <FileText className="w-4 h-4" />
                   {request.supporting_document_name ?? 'View Document'}
                   <ExternalLink className="w-3.5 h-3.5 ml-auto" />
@@ -220,34 +229,36 @@ export function RequestDetailPage() {
               </div>
             )}
 
+            {/* Comments */}
             {(request.hall_admin_comment || request.dean_comment) && (
               <div className="pt-3 border-t border-slate-100 space-y-3">
                 {request.hall_admin_comment && (
                   <div className="p-3 bg-amber-50 border border-amber-100 rounded-xl">
-                    <p className="text-xs font-medium text-amber-600 mb-1 flex items-center gap-1"><MessageSquare className="w-3.5 h-3.5" /> Hall Admin Comment</p>
+                    <p className="text-xs font-medium text-amber-600 mb-1 flex items-center gap-1">
+                      <MessageSquare className="w-3.5 h-3.5" /> Hall Admin Comment
+                    </p>
                     <p className="text-sm text-slate-700">{request.hall_admin_comment}</p>
                   </div>
                 )}
                 {request.dean_comment && (
                   <div className="p-3 bg-emerald-50 border border-emerald-100 rounded-xl">
-                    <p className="text-xs font-medium text-emerald-600 mb-1 flex items-center gap-1"><MessageSquare className="w-3.5 h-3.5" /> Dean Comment</p>
+                    <p className="text-xs font-medium text-emerald-600 mb-1 flex items-center gap-1">
+                      <MessageSquare className="w-3.5 h-3.5" /> Dean Comment
+                    </p>
                     <p className="text-sm text-slate-700">{request.dean_comment}</p>
                   </div>
                 )}
               </div>
             )}
 
+            {/* Checkout / Checkin times */}
             {(request.checkout_time || request.checkin_time) && (
               <div className="pt-3 border-t border-slate-100 space-y-2">
                 {request.checkout_time && (
-                  <p className="text-xs text-slate-500">
-                    Checked out: {new Date(request.checkout_time).toLocaleString()}
-                  </p>
+                  <p className="text-xs text-slate-500">Checked out: {new Date(request.checkout_time).toLocaleString()}</p>
                 )}
                 {request.checkin_time && (
-                  <p className="text-xs text-slate-500">
-                    Checked in: {new Date(request.checkin_time).toLocaleString()}
-                  </p>
+                  <p className="text-xs text-slate-500">Checked in: {new Date(request.checkin_time).toLocaleString()}</p>
                 )}
               </div>
             )}
