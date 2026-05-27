@@ -194,8 +194,8 @@ export function DashboardPage() {
                 value: stats.todayTotal as number ?? 0,
                 icon: <FileText className="w-5 h-5 text-blue-600" />,
                 color: 'text-blue-600', bg: 'bg-blue-50',
-                sub: 'New requests received today',
-                to: '/admin/requests?todayOnly=true',
+                sub: 'New pending requests today',
+                to: '/admin/requests?status=PENDING_HALL_ADMIN',
               }} />
               <StatCardItem card={{
                 label: 'Awaiting Dean Approval',
@@ -239,15 +239,15 @@ export function DashboardPage() {
                 value: stats.todayTotal as number ?? 0,
                 icon: <FileText className="w-5 h-5 text-blue-600" />,
                 color: 'text-blue-600', bg: 'bg-blue-50',
-                sub: 'New requests received today',
-                to: '/admin/requests?todayOnly=true',
+                sub: 'Requests awaiting your approval',
+                to: '/admin/requests?status=APPROVED_BY_HALL_ADMIN',
               }} />
               <StatCardItem card={{
                 label: 'Pending Your Approval',
                 value: stats.pendingDean as number,
                 icon: <Clock className="w-5 h-5 text-amber-600" />,
                 color: 'text-amber-600', bg: 'bg-amber-50',
-                sub: 'Awaiting your final decision',
+                sub: 'New pending receive today',
                 to: '/admin/requests?status=APPROVED_BY_HALL_ADMIN',
               }} />
               <StatCardItem card={{

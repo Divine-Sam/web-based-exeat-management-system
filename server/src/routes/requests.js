@@ -188,9 +188,9 @@ router.get('/admin/stats', protect, requireRole('hall_admin', 'dean'), async (re
     endOfDay.setUTCHours(23, 59, 59, 999);
 
     const todayTotal = all.filter(r => {
-      const d = new Date(r.created_at);
-      return d >= startOfDay && d <= endOfDay;
-    }).length;
+  const d = new Date(r.created_at);
+  return d >= startOfDay && d <= endOfDay && r.status === 'PENDING_HALL_ADMIN';
+}).length;
 
     res.json({
       total:            all.length,

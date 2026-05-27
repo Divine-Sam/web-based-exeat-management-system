@@ -45,8 +45,7 @@ export function AdminRequestsPage() {
   const [page, setPage]                       = useState(1);
   const PAGE_SIZE = 10;
 
-  const searchParamsString = searchParams.toString();
-useEffect(() => { load(); }, [statusFilter, search, searchParamsString]); {
+  useEffect(() => {
     if (!isToday) {
       setStatusFilter(statusFromUrl);
       setPage(1);
