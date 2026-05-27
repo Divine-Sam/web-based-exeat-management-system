@@ -229,7 +229,7 @@ export function DashboardPage() {
             </div>
 
             <Link
-             to: '/admin/requests?filter=today',
+              to="/admin/requests?status=PENDING_HALL_ADMIN"
               className="flex items-center justify-between bg-blue-600 hover:bg-blue-700 text-white rounded-2xl p-5 transition-colors shadow-sm shadow-blue-200 group"
             >
               <div>
