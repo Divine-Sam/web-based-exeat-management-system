@@ -188,16 +188,18 @@ router.get('/admin/stats', protect, requireRole('hall_admin', 'dean', 'security'
     endOfDay.setUTCHours(23, 59, 59, 999);
 
     const todayTotal = all.filter(r => {
-  const d = new Date(r.created_at);
-  return d >= startOfDay && d <= endOfDay && r.status === 'PENDING_HALL_ADMIN';
-  totalApproved: all.filter(r =>
-  ['APPROVED_FINAL', 'CHECKED_OUT', 'CHECKED_IN'].includes(r.status)
-  ).length;
-  }).length;
+      const d = new Date(r.created_at);
+      return d >= startOfDay && d <= endOfDay;
+    }).length;
+
+    const totalApproved = all.filter(r =>
+      ['APPROVED_FINAL', 'CHECKED_OUT', 'CHECKED_IN'].includes(r.status)
+    ).length;
 
     res.json({
       total:            all.length,
       todayTotal,
+      totalApproved,
       pendingHallAdmin: all.filter(r => r.status === 'PENDING_HALL_ADMIN').length,
       pendingDean:      all.filter(r => r.status === 'APPROVED_BY_HALL_ADMIN').length,
       approvedFinal:    all.filter(r => r.status === 'APPROVED_FINAL').length,
@@ -215,7 +217,6 @@ router.get('/all', protect, requireRole('hall_admin', 'dean', 'security'), async
   try {
     const filter = {};
 
-    // Today only filter — overrides everything else
     if (req.query.todayOnly === 'true') {
       const startOfDay = new Date();
       startOfDay.setUTCHours(0, 0, 0, 0);
@@ -223,11 +224,9 @@ router.get('/all', protect, requireRole('hall_admin', 'dean', 'security'), async
       endOfDay.setUTCHours(23, 59, 59, 999);
       filter.created_at = { $gte: startOfDay, $lte: endOfDay };
     }
-    // Specific status filter
     else if (req.query.status) {
       filter.status = req.query.status;
     }
-    // Default — hall_admin and dean never see CHECKED_OUT or CHECKED_IN
     else if (req.user.role === 'hall_admin' || req.user.role === 'dean') {
       filter.status = { $nin: ['CHECKED_OUT', 'CHECKED_IN'] };
     }
@@ -236,7 +235,6 @@ router.get('/all', protect, requireRole('hall_admin', 'dean', 'security'), async
       .populate('student_id', 'full_name crawford_number role')
       .sort({ created_at: -1 });
 
-    // Search
     if (req.query.search) {
       const s = req.query.search.toLowerCase();
       requests = requests.filter(r => {
@@ -276,7 +274,7 @@ router.post('/:id/hall-approve', protect, requireRole('hall_admin'), async (req,
     const request = await ExeatRequest.findById(req.params.id);
     if (!request) return res.status(404).json({ message: 'Request not found.' });
     if (request.status !== 'PENDING_HALL_ADMIN') return res.status(400).json({ message: 'Request must be pending Hall Admin review.' });
-    request.status           = 'APPROVED_BY_HALL_ADMIN';
+    request.status             = 'APPROVED_BY_HALL_ADMIN';
     request.hall_admin_comment = req.body.comment || '';
     await request.save();
     await logAudit(req.user._id, 'HALL_ADMIN_APPROVED', request._id, 'PENDING_HALL_ADMIN', 'APPROVED_BY_HALL_ADMIN', req.body.comment);
