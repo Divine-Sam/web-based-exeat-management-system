@@ -227,7 +227,7 @@ router.get('/all', protect, requireRole('hall_admin', 'dean', 'security'), async
     else if (req.query.status) {
       filter.status = req.query.status;
     }
-    else if (req.user.role === 'hall_admin') {
+    else if (req.user.role === 'hall_admin' || req.user.role === 'dean') {
   filter.status = { $nin: ['CHECKED_OUT', 'CHECKED_IN'] };
 }
     let requests = await ExeatRequest.find(filter)
