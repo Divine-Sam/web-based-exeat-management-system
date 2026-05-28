@@ -152,7 +152,7 @@ export function DashboardPage() {
               <StatCardItem card={{ label: 'Awaiting Dean Approval', value: n('pendingDean'), icon: <Users className="w-5 h-5 text-blue-500" />, color: 'text-blue-500', bg: 'bg-blue-50', sub: 'Approved by you — pending dean', to: '/admin/requests?status=APPROVED_BY_HALL_ADMIN' }} />
               <StatCardItem card={{ label: 'Pending Your Review', value: n('pendingHallAdmin'), icon: <Clock className="w-5 h-5 text-amber-600" />, color: 'text-amber-600', bg: 'bg-amber-50', sub: 'Requests awaiting your action', to: '/admin/requests?status=PENDING_HALL_ADMIN' }} />
             </div>
-            <Link to="/admin/requests?status=PENDING_HALL_ADMIN" className="flex items-center justify-between bg-blue-600 hover:bg-blue-700 text-white rounded-2xl p-5 transition-colors shadow-sm shadow-blue-200 group">
+            <Link to="/admin/requests" className="flex items-center justify-between bg-blue-600 hover:bg-blue-700 text-white rounded-2xl p-5 transition-colors shadow-sm shadow-blue-200 group">
               <div><p className="font-semibold">Review Pending Requests</p><p className="text-blue-200 text-sm mt-0.5">{n('pendingHallAdmin')} request(s) pending your review</p></div>
               <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
             </Link>
@@ -167,7 +167,7 @@ export function DashboardPage() {
               <StatCardItem card={{ label: 'Pending Your Approval', value: n('pendingDean'), icon: <Clock className="w-5 h-5 text-amber-600" />, color: 'text-amber-600', bg: 'bg-amber-50', sub: 'Awaiting your final decision', to: '/admin/requests?status=APPROVED_BY_HALL_ADMIN' }} />
               <StatCardItem card={{ label: 'Total Approved', value: n('totalApproved'), icon: <CheckCircle className="w-5 h-5 text-emerald-600" />, color: 'text-emerald-600', bg: 'bg-emerald-50', sub: 'All fully approved requests', to: '/admin/requests?status=APPROVED_FINAL' }} />
             </div>
-            <Link to="/admin/requests?status=APPROVED_BY_HALL_ADMIN" className="flex items-center justify-between bg-blue-600 hover:bg-blue-700 text-white rounded-2xl p-5 transition-colors shadow-sm shadow-blue-200 group">
+            <Link to="/admin/requests" className="flex items-center justify-between bg-blue-600 hover:bg-blue-700 text-white rounded-2xl p-5 transition-colors shadow-sm shadow-blue-200 group">
               <div><p className="font-semibold">Review Pending Requests</p><p className="text-blue-200 text-sm mt-0.5">{n('pendingDean')} request(s) awaiting your final approval</p></div>
               <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
             </Link>
