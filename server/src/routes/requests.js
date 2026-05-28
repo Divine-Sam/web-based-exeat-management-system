@@ -164,14 +164,14 @@ router.get('/my/stats', protect, requireRole('student'), async (req, res) => {
   try {
     const session = getCurrentAcademicSession();
     const all = await ExeatRequest.find({ student_id: req.user._id, academic_session: session }).select('status');
-    res.json({
-      total:     all.length,
-      pending:   all.filter(r => ['PENDING_HALL_ADMIN', 'APPROVED_BY_HALL_ADMIN'].includes(r.status)).length,
-      approved:  all.filter(r => ['APPROVED_FINAL', 'CHECKED_OUT', 'CHECKED_IN'].includes(r.status)).length,
-      rejected:  all.filter(r => ['REJECTED_BY_HALL_ADMIN', 'REJECTED_BY_DEAN'].includes(r.status)).length,
-      remaining: Math.max(0, 5 - all.length),
-      session,
-    });
+    rres.json({
+  total:     all.filter(r => !['REJECTED_BY_HALL_ADMIN', 'REJECTED_BY_DEAN'].includes(r.status)).length,
+  pending:   all.filter(r => ['PENDING_HALL_ADMIN', 'APPROVED_BY_HALL_ADMIN'].includes(r.status)).length,
+  approved:  all.filter(r => ['APPROVED_FINAL', 'CHECKED_OUT', 'CHECKED_IN'].includes(r.status)).length,
+  rejected:  all.filter(r => ['REJECTED_BY_HALL_ADMIN', 'REJECTED_BY_DEAN'].includes(r.status)).length,
+  remaining: Math.max(0, 5 - all.filter(r => !['REJECTED_BY_HALL_ADMIN', 'REJECTED_BY_DEAN'].includes(r.status)).length),
+  session,
+});
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
