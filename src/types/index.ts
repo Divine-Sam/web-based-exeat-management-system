@@ -1,5 +1,5 @@
 
-export type Role = 'student' | 'hall_admin' | 'dean' | 'security' | 'super_admin';
+export type Role = 'student' | 'hall_admin' | 'dean' | 'security' | 'superadmin';
 
 export type ReasonCategory = 'Medical' | 'Family Emergency' | 'Official' | 'Personal' | 'Academic';
 

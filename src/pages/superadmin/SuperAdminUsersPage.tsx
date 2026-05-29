@@ -150,7 +150,7 @@ export function SuperAdminUsersPage() {
                             className="p-1.5 rounded-lg text-slate-400 hover:bg-purple-50 hover:text-purple-600 transition-colors" title="Edit role">
                             <Edit2 className="w-4 h-4" />
                           </button>
-                          {u.role !== 'super_admin' && (
+                          {u.role !== 'superadmin' && (
                             <button onClick={() => setDeleteUser(u)}
                               className="p-1.5 rounded-lg text-slate-400 hover:bg-red-50 hover:text-red-600 transition-colors" title="Delete">
                               <Trash2 className="w-4 h-4" />

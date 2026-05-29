@@ -18,13 +18,13 @@ import { SuperAdminUsersPage } from './pages/superadmin/SuperAdminUsersPage';
 import { SuperAdminAuditPage } from './pages/superadmin/SuperAdminAuditPage';
 import { SuperAdminLoginPage } from './pages/superadmin/SuperAdminLoginPage';
 
-// Add inside <Routes> before the * catch-all route:
-<Route path="/superadmin/login" element={<SuperAdminLoginPage />} />
-
 function RootRedirect() {
   const { user, loading } = useAuth();
   if (loading) return <PageLoader />;
-  if (user) return <Navigate to="/dashboard" replace />;
+  if (user) {
+    if (user.profile.role === 'superadmin') return <Navigate to="/superadmin" replace />;
+    return <Navigate to="/dashboard" replace />;
+  }
   return <Navigate to="/login" replace />;
 }
 
@@ -37,6 +37,7 @@ function App() {
             <Route path="/" element={<RootRedirect />} />
             <Route path="/login" element={<LoginPage />} />
             <Route path="/signup" element={<SignUpPage />} />
+            <Route path="/superadmin/login" element={<SuperAdminLoginPage />} />
 
             <Route path="/dashboard" element={
               <ProtectedRoute>
@@ -83,19 +84,19 @@ function App() {
               </ProtectedRoute>
             } />
 
-            {/* ✅ Super Admin routes — inside Routes where they belong */}
+            {/* Superadmin routes */}
             <Route path="/superadmin" element={
-              <ProtectedRoute allowedRoles={['super_admin']}>
+              <ProtectedRoute allowedRoles={['superadmin']}>
                 <SuperAdminDashboard />
               </ProtectedRoute>
             } />
             <Route path="/superadmin/users" element={
-              <ProtectedRoute allowedRoles={['super_admin']}>
+              <ProtectedRoute allowedRoles={['superadmin']}>
                 <SuperAdminUsersPage />
               </ProtectedRoute>
             } />
             <Route path="/superadmin/audit" element={
-              <ProtectedRoute allowedRoles={['super_admin']}>
+              <ProtectedRoute allowedRoles={['superadmin']}>
                 <SuperAdminAuditPage />
               </ProtectedRoute>
             } />

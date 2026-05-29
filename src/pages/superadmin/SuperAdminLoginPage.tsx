@@ -23,7 +23,7 @@ export function SuperAdminLoginPage() {
     }
     setLoading(true);
     try {
-      await login(crawfordNumber.trim(), password, 'super_admin');
+      await login(crawfordNumber.trim(), password, 'superadmin');
       navigate('/superadmin');
     } catch (err: unknown) {
       showToast(err instanceof Error ? err.message : 'Login failed.', 'error');
