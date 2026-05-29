@@ -1,8 +1,8 @@
 require('dotenv').config();
-const express = require('express');
-const cors    = require('cors');
+const express  = require('express');
+const cors     = require('cors');
 const mongoose = require('mongoose');
-const path    = require('path');
+const path     = require('path');
 
 const authRoutes       = require('./routes/auth');
 const requestRoutes    = require('./routes/requests');
@@ -16,21 +16,23 @@ const PORT = process.env.PORT || 5000;
 app.use(cors({
   origin: [
     'http://localhost:5173',
-    'https://web-based-exeat-management-system.vercel.app',
+    'https://web-based-exeat-management-system-c.vercel.app',
   ],
   credentials: true,
 }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// ✅ Serve uploaded files statically
-app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
+// ── Serve uploaded files ───────────────────────────────────────────────────
+const uploadsPath = path.join(__dirname, '../../uploads');
+console.log('📁 Serving uploads from:', uploadsPath);
+app.use('/uploads', express.static(uploadsPath));
 
 // ── Routes ─────────────────────────────────────────────────────────────────
 app.use('/api/auth',       authRoutes);
 app.use('/api/requests',   requestRoutes);
 app.use('/api/audit',      auditRoutes);
-app.use('/api/superadmin', superadminRoutes); // ✅ moved here after app is defined
+app.use('/api/superadmin', superadminRoutes);
 
 // Health check
 app.get('/api/health', (_req, res) => res.json({ status: 'ok', time: new Date().toISOString() }));
