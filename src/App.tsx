@@ -16,6 +16,10 @@ import { PageLoader } from './components/LoadingSpinner';
 import { SuperAdminDashboard } from './pages/superadmin/SuperAdminDashboard';
 import { SuperAdminUsersPage } from './pages/superadmin/SuperAdminUsersPage';
 import { SuperAdminAuditPage } from './pages/superadmin/SuperAdminAuditPage';
+import { SuperAdminLoginPage } from './pages/superadmin/SuperAdminLoginPage';
+
+// Add inside <Routes> before the * catch-all route:
+<Route path="/superadmin/login" element={<SuperAdminLoginPage />} />
 
 function RootRedirect() {
   const { user, loading } = useAuth();
