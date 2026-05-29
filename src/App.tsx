@@ -11,8 +11,11 @@ import { RequestDetailPage } from './pages/student/RequestDetailPage';
 import { AdminRequestsPage } from './pages/admin/AdminRequestsPage';
 import { AuditLogPage } from './pages/admin/AuditLogPage';
 import { SecurityDeskPage } from './pages/security/SecurityDeskPage';
-import { AccountSettingsPage } from './pages/account/AccountSettingsPage'; 
+import { AccountSettingsPage } from './pages/account/AccountSettingsPage';
 import { PageLoader } from './components/LoadingSpinner';
+import { SuperAdminDashboard } from './pages/superadmin/SuperAdminDashboard';
+import { SuperAdminUsersPage } from './pages/superadmin/SuperAdminUsersPage';
+import { SuperAdminAuditPage } from './pages/superadmin/SuperAdminAuditPage';
 
 function RootRedirect() {
   const { user, loading } = useAuth();
@@ -70,10 +73,26 @@ function App() {
               </ProtectedRoute>
             } />
 
-            {/* ✅ Account Settings — all roles */}
             <Route path="/account/settings" element={
               <ProtectedRoute>
                 <AccountSettingsPage />
+              </ProtectedRoute>
+            } />
+
+            {/* ✅ Super Admin routes — inside Routes where they belong */}
+            <Route path="/superadmin" element={
+              <ProtectedRoute allowedRoles={['super_admin']}>
+                <SuperAdminDashboard />
+              </ProtectedRoute>
+            } />
+            <Route path="/superadmin/users" element={
+              <ProtectedRoute allowedRoles={['super_admin']}>
+                <SuperAdminUsersPage />
+              </ProtectedRoute>
+            } />
+            <Route path="/superadmin/audit" element={
+              <ProtectedRoute allowedRoles={['super_admin']}>
+                <SuperAdminAuditPage />
               </ProtectedRoute>
             } />
 

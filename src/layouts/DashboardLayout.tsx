@@ -23,20 +23,23 @@ const NAV_ITEMS: NavItem[] = [
   { label: 'Security Desk',   path: '/security/requests',icon: <Shield className="w-5 h-5" />,        roles: ['security'] },
   // ✅ Audit Logs removed
   { label: 'Account Settings',path: '/account/settings', icon: <Settings className="w-5 h-5" />,    roles: ['student', 'hall_admin', 'dean', 'security'] },
+  { label: 'Super Admin', path: '/superadmin', icon: <Shield className="w-5 h-5" />, roles: ['super_admin'] },
 ];
 
 const ROLE_LABELS: Record<Role, string> = {
-  student:    'Student',
-  hall_admin: 'Hall Admin',
-  dean:       'Dean',
-  security:   'Security',
+  student:     'Student',
+  hall_admin:  'Hall Admin',
+  dean:        'Dean',
+  security:    'Security',
+  super_admin: 'Super Admin',  // ✅ add
 };
 
 const ROLE_COLORS: Record<Role, string> = {
-  student:    'bg-blue-100 text-blue-700',
-  hall_admin: 'bg-amber-100 text-amber-700',
-  dean:       'bg-emerald-100 text-emerald-700',
-  security:   'bg-red-100 text-red-700',
+  student:     'bg-blue-100 text-blue-700',
+  hall_admin:  'bg-amber-100 text-amber-700',
+  dean:        'bg-emerald-100 text-emerald-700',
+  security:    'bg-red-100 text-red-700',
+  super_admin: 'bg-purple-100 text-purple-700',  // ✅ add
 };
 
 export function DashboardLayout({ children }: { children: ReactNode }) {

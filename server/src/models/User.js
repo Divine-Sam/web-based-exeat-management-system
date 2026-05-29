@@ -5,22 +5,23 @@ const userSchema = new mongoose.Schema({
   full_name: { type: String, required: true, trim: true },
   crawford_number: { type: String, required: true, unique: true, trim: true, uppercase: true },
   password: { type: String, required: true },
-  role: { type: String, enum: ['student', 'hall_admin', 'dean', 'security'], required: true },
+  role: {
+    type: String,
+    enum: ['student', 'hall_admin', 'dean', 'security', 'super_admin'], // ✅ added
+    required: true
+  },
 }, { timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' } });
 
-// Hash password before saving
 userSchema.pre('save', async function (next) {
   if (!this.isModified('password')) return next();
   this.password = await bcrypt.hash(this.password, 12);
   next();
 });
 
-// Compare password
 userSchema.methods.comparePassword = async function (candidate) {
   return bcrypt.compare(candidate, this.password);
 };
 
-// Return safe profile (no password)
 userSchema.methods.toProfile = function () {
   return {
     id: this._id.toString(),

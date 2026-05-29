@@ -1,4 +1,4 @@
-export type Role = 'student' | 'hall_admin' | 'dean' | 'security';
+export type Role = 'student' | 'hall_admin' | 'dean' | 'security' | 'super_admin';
 
 export type ReasonCategory = 'Medical' | 'Family Emergency' | 'Official' | 'Personal' | 'Academic';
 

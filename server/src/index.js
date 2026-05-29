@@ -7,6 +7,8 @@ const path = require('path');
 const authRoutes    = require('./routes/auth');
 const requestRoutes = require('./routes/requests');
 const auditRoutes   = require('./routes/audit');
+const superadminRouter = require('./routes/superadmin');
+app.use('/api/superadmin', superadminRouter);
 
 const app  = express();
 const PORT = process.env.PORT || 5000;
