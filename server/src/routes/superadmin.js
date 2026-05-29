@@ -7,7 +7,7 @@ const { protect, requireRole } = require('../middleware/auth');
 const router = express.Router();
 
 // ── Get all users ──────────────────────────────────────────────────────────
-router.get('/users', protect, requireRole('super_admin'), async (req, res) => {
+router.get('/users', protect, requireRole('superadmin'), async (req, res) => {
   try {
     const users = await User.find().select('-password').sort({ created_at: -1 });
     res.json(users.map(u => u.toProfile()));
@@ -17,7 +17,7 @@ router.get('/users', protect, requireRole('super_admin'), async (req, res) => {
 });
 
 // ── Create user ────────────────────────────────────────────────────────────
-router.post('/users', protect, requireRole('super_admin'), async (req, res) => {
+router.post('/users', protect, requireRole('superadmin'), async (req, res) => {
   try {
     const { full_name, crawford_number, password, role } = req.body;
     if (!full_name || !crawford_number || !password || !role) {
@@ -39,7 +39,7 @@ router.post('/users', protect, requireRole('super_admin'), async (req, res) => {
 });
 
 // ── Update user role ───────────────────────────────────────────────────────
-router.put('/users/:id/role', protect, requireRole('super_admin'), async (req, res) => {
+router.put('/users/:id/role', protect, requireRole('superadmin'), async (req, res) => {
   try {
     const { role } = req.body;
     if (!role) return res.status(400).json({ message: 'Role is required.' });
@@ -52,11 +52,11 @@ router.put('/users/:id/role', protect, requireRole('super_admin'), async (req, r
 });
 
 // ── Delete user ────────────────────────────────────────────────────────────
-router.delete('/users/:id', protect, requireRole('super_admin'), async (req, res) => {
+router.delete('/users/:id', protect, requireRole('superadmin'), async (req, res) => {
   try {
     const user = await User.findById(req.params.id);
     if (!user) return res.status(404).json({ message: 'User not found.' });
-    if (user.role === 'super_admin') return res.status(400).json({ message: 'Cannot delete another super admin.' });
+    if (user.role === 'superadmin') return res.status(400).json({ message: 'Cannot delete superadmin.' });
     await user.deleteOne();
     res.json({ message: 'User deleted.' });
   } catch (err) {
@@ -65,7 +65,7 @@ router.delete('/users/:id', protect, requireRole('super_admin'), async (req, res
 });
 
 // ── System stats ───────────────────────────────────────────────────────────
-router.get('/stats', protect, requireRole('super_admin'), async (req, res) => {
+router.get('/stats', protect, requireRole('superadmin'), async (req, res) => {
   try {
     const [users, requests] = await Promise.all([
       User.find().select('role'),
@@ -76,18 +76,18 @@ router.get('/stats', protect, requireRole('super_admin'), async (req, res) => {
     startOfDay.setUTCHours(0, 0, 0, 0);
 
     res.json({
-      totalUsers:       users.length,
-      students:         users.filter(u => u.role === 'student').length,
-      hallAdmins:       users.filter(u => u.role === 'hall_admin').length,
-      deans:            users.filter(u => u.role === 'dean').length,
-      security:         users.filter(u => u.role === 'security').length,
-      totalRequests:    requests.length,
-      todayRequests:    requests.filter(r => new Date(r.created_at) >= startOfDay).length,
-      pending:          requests.filter(r => r.status === 'PENDING_HALL_ADMIN').length,
-      approvedFinal:    requests.filter(r => r.status === 'APPROVED_FINAL').length,
-      checkedOut:       requests.filter(r => r.status === 'CHECKED_OUT').length,
-      checkedIn:        requests.filter(r => r.status === 'CHECKED_IN').length,
-      rejected:         requests.filter(r => ['REJECTED_BY_HALL_ADMIN', 'REJECTED_BY_DEAN'].includes(r.status)).length,
+      totalUsers:    users.length,
+      students:      users.filter(u => u.role === 'student').length,
+      hallAdmins:    users.filter(u => u.role === 'hall_admin').length,
+      deans:         users.filter(u => u.role === 'dean').length,
+      security:      users.filter(u => u.role === 'security').length,
+      totalRequests: requests.length,
+      todayRequests: requests.filter(r => new Date(r.created_at) >= startOfDay).length,
+      pending:       requests.filter(r => r.status === 'PENDING_HALL_ADMIN').length,
+      approvedFinal: requests.filter(r => r.status === 'APPROVED_FINAL').length,
+      checkedOut:    requests.filter(r => r.status === 'CHECKED_OUT').length,
+      checkedIn:     requests.filter(r => r.status === 'CHECKED_IN').length,
+      rejected:      requests.filter(r => ['REJECTED_BY_HALL_ADMIN', 'REJECTED_BY_DEAN'].includes(r.status)).length,
     });
   } catch (err) {
     res.status(500).json({ message: err.message });
@@ -95,7 +95,7 @@ router.get('/stats', protect, requireRole('super_admin'), async (req, res) => {
 });
 
 // ── All requests ───────────────────────────────────────────────────────────
-router.get('/requests', protect, requireRole('super_admin'), async (req, res) => {
+router.get('/requests', protect, requireRole('superadmin'), async (req, res) => {
   try {
     const filter = {};
     if (req.query.status) filter.status = req.query.status;
@@ -109,7 +109,7 @@ router.get('/requests', protect, requireRole('super_admin'), async (req, res) =>
 });
 
 // ── Audit logs ─────────────────────────────────────────────────────────────
-router.get('/audit', protect, requireRole('super_admin'), async (req, res) => {
+router.get('/audit', protect, requireRole('superadmin'), async (req, res) => {
   try {
     const logs = await AuditLog.find()
       .populate('user_id', 'full_name crawford_number role')
