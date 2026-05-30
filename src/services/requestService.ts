@@ -126,10 +126,10 @@ export async function checkIn(requestId: string, _securityId: string): Promise<v
 // ── Document URL ───────────────────────────────────────────────────────────
 
 export async function getDocumentUrl(path: string): Promise<string> {
+  if (path.startsWith('http')) return path;
   const token = getToken();
   return `${BASE.replace('/api', '')}/uploads/${path}${token ? `?token=${token}` : ''}`;
 }
-
 // ── Audit ──────────────────────────────────────────────────────────────────
 
 export async function getAuditLogs(): Promise<AuditLog[]> {
