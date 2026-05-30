@@ -45,6 +45,9 @@ router.post('/', protect, requireRole('student'), upload.single('document'), asy
         !parent_name || !parent_phone || !parent_relationship) {
       return res.status(400).json({ message: 'All fields are required.' });
     }
+    if (!/^\d{7,11}$/.test(parent_phone.replace(/[\s\-+]/g, ''))) {
+  return res.status(400).json({ message: 'Parent phone number must be between 10 and 11 digits.' });
+    }
 
     const session = getCurrentAcademicSession();
     const studentId = req.user._id;

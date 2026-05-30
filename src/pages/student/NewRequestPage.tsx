@@ -58,6 +58,9 @@ export function NewRequestPage() {
     if (!returnDate) { showToast('Return date is required.', 'warning'); return; }
     if (!parentName.trim()) { showToast('Parent/Guardian name is required.', 'warning'); return; }
     if (!parentPhone.trim()) { showToast('Parent/Guardian phone is required.', 'warning'); return; }
+    if (!/^\+?\d{10,11}$/.test(parentPhone.replace(/[\s\-]/g, ''))) {
+      showToast('Phone number must be between 10 and 11 digits.', 'warning'); return;
+    }
     if (!parentRelationship) { showToast('Relationship is required.', 'warning'); return; }
     if (!file) { showToast('Supporting document is required.', 'warning'); return; }
 
@@ -221,8 +224,9 @@ export function NewRequestPage() {
                 <input
                   type="tel"
                   value={parentPhone}
-                  onChange={e => setParentPhone(e.target.value)}
-                  placeholder="e.g. 08012345678"
+                  maxLength={11}
+                  onChange={e => setParentPhone(e.target.value.replace(/[^\d+\s\-]/g, ''))}
+                  placeholder="e.g. 08023355808"
                   className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                 />
               </div>
