@@ -80,7 +80,7 @@ router.post('/', protect, requireRole('student'), upload.single('document'), asy
       parent_name,
       parent_phone,
       parent_relationship,
-      supporting_document_path: req.file.filename,
+      supporting_document_path: req.file.path,
       supporting_document_name: req.file.originalname,
       status: 'PENDING_HALL_ADMIN',
     });
@@ -122,7 +122,7 @@ router.put('/:id', protect, requireRole('student'), upload.single('document'), a
     existing.total_days         = totalDays;
 
     if (req.file) {
-      existing.supporting_document_path = req.file.filename;
+      existing.supporting_document_path = req.file.filepath;
       existing.supporting_document_name = req.file.originalname;
     }
 
