@@ -122,8 +122,8 @@ router.put('/:id', protect, requireRole('student'), upload.single('document'), a
     existing.total_days         = totalDays;
 
     if (req.file) {
-      existing.supporting_document_path = req.file.filepath;
-      existing.supporting_document_name = req.file.originalname;
+    existing.supporting_document_path = req.file.path;
+    existing.supporting_document_name = req.file.originalname;
     }
 
     await existing.save();

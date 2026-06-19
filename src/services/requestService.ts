@@ -1,4 +1,4 @@
-import { api, BASE, getToken } from '../lib/api';
+import { api, BASE } from '../lib/api';
 import { ExeatRequest, RequestStatus, AuditLog } from '../types';
 
 // ── Student ────────────────────────────────────────────────────────────────
@@ -127,8 +127,8 @@ export async function checkIn(requestId: string, _securityId: string): Promise<v
 
 export async function getDocumentUrl(path: string): Promise<string> {
   if (path.startsWith('http')) return path;
-  const token = getToken();
-  return `${BASE.replace('/api', '')}/uploads/${path}${token ? `?token=${token}` : ''}`;
+  // Fallback for old local paths (no longer used but kept for safety)
+  return `${BASE.replace('/api', '')}/uploads/${path}`;
 }
 // ── Audit ──────────────────────────────────────────────────────────────────
 
