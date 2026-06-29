@@ -1,5 +1,4 @@
 const cloudinary = require('cloudinary').v2;
-const { CloudinaryStorage } = require('multer-storage-cloudinary');
 const multer = require('multer');
 
 cloudinary.config({
@@ -8,20 +7,30 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
-const storage = new CloudinaryStorage({
-  cloudinary: cloudinary,
-  params: async (req, file) => {
-    return {
-      folder: 'exeat-documents',
-      resource_type: 'auto',
-      public_id: `${Date.now()}-${file.originalname}`,
-    };
-  },
-});
+// Store file in memory first, then upload to Cloudinary manually
+const storage = multer.memoryStorage();
 
 const upload = multer({
   storage,
   limits: { fileSize: 5 * 1024 * 1024 },
 });
 
-module.exports = upload;
+// Helper to upload buffer to Cloudinary
+async function uploadToCloudinary(file) {
+  return new Promise((resolve, reject) => {
+    const stream = cloudinary.uploader.upload_stream(
+      {
+        folder: 'exeat-documents',
+        resource_type: 'auto',
+        public_id: `${Date.now()}-${file.originalname}`,
+      },
+      (error, result) => {
+        if (error) reject(error);
+        else resolve(result);
+      }
+    );
+    stream.end(file.buffer);
+  });
+}
+
+module.exports = { upload, uploadToCloudinary };

@@ -1,7 +1,7 @@
 const express = require('express');
 const ExeatRequest = require('../models/ExeatRequest');
 const { protect, requireRole } = require('../middleware/auth');
-const upload = require('../middleware/upload');
+const { upload, uploadToCloudinary } = require('../middleware/upload');
 const { getCurrentAcademicSession, logAudit } = require('../utils/helpers');
 
 const router = express.Router();
@@ -66,25 +66,28 @@ router.post('/', protect, requireRole('student'), upload.single('document'), asy
       return_date:    { $gte: departure_date },
     });
     if (overlaps) return res.status(400).json({ message: 'You already have an active exeat within the selected dates.' });
-    if (!req.file) return res.status(400).json({ message: 'Supporting document is required.' });
+   if (!req.file) return res.status(400).json({ message: 'Supporting document is required.' });
 
-    const request = await ExeatRequest.create({
-      student_id: studentId,
-      destination,
-      reason_description,
-      reason_category,
-      departure_date,
-      return_date,
-      total_days: totalDays,
-      academic_session: session,
-      parent_name,
-      parent_phone,
-      parent_relationship,
-      supporting_document_url:       req.file.path,        
-      supporting_document_public_id: req.file.filename,    
-      supporting_document_name:      req.file.originalname,
-      status: 'PENDING_HALL_ADMIN',
-    });
+// ✅ Upload to Cloudinary
+const cloudinaryResult = await uploadToCloudinary(req.file);
+
+const request = await ExeatRequest.create({
+  student_id: studentId,
+  destination,
+  reason_description,
+  reason_category,
+  departure_date,
+  return_date,
+  total_days: totalDays,
+  academic_session: session,
+  parent_name,
+  parent_phone,
+  parent_relationship,
+  supporting_document_url:       cloudinaryResult.secure_url,
+  supporting_document_public_id: cloudinaryResult.public_id,
+  supporting_document_name:      req.file.originalname,
+  status: 'PENDING_HALL_ADMIN',
+});
 
     await logAudit(studentId, 'REQUEST_CREATED', request._id, null, 'PENDING_HALL_ADMIN');
     const populated = await populatedRequest(request._id);
@@ -122,17 +125,18 @@ router.put('/:id', protect, requireRole('student'), upload.single('document'), a
     existing.return_date        = return_date;
     existing.total_days         = totalDays;
 
-    if (req.file) {
-      if (existing.supporting_document_public_id) {
-        const cloudinary = require('cloudinary').v2;
-        await cloudinary.uploader.destroy(existing.supporting_document_public_id, {
-          resource_type: 'raw',
-        });
-      }
-      existing.supporting_document_url       = req.file.path;
-      existing.supporting_document_public_id = req.file.filename;
-      existing.supporting_document_name      = req.file.originalname;
-    }
+   if (req.file) {
+  if (existing.supporting_document_public_id) {
+    const cloudinary = require('cloudinary').v2;
+    await cloudinary.uploader.destroy(existing.supporting_document_public_id, {
+      resource_type: 'raw',
+    });
+  }
+  const cloudinaryResult = await uploadToCloudinary(req.file);
+  existing.supporting_document_url       = cloudinaryResult.secure_url;
+  existing.supporting_document_public_id = cloudinaryResult.public_id;
+  existing.supporting_document_name      = req.file.originalname;
+}
 
     await existing.save();
     await logAudit(req.user._id, 'REQUEST_EDITED', existing._id, 'PENDING_HALL_ADMIN', 'PENDING_HALL_ADMIN');
