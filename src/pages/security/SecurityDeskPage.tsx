@@ -3,7 +3,7 @@ import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
 import { useSearchParams } from 'react-router-dom';
 import { DashboardLayout } from '../../layouts/DashboardLayout';
-import { getAllRequests, checkOut, checkIn, getDocumentUrl } from '../../services/requestService';
+import { getAllRequests, checkOut, checkIn,} from '../../services/requestService';
 import { ExeatRequest } from '../../types';
 import { StatusBadge } from '../../components/StatusBadge';
 import { LoadingSpinner } from '../../components/LoadingSpinner';
@@ -64,16 +64,11 @@ export function SecurityDeskPage() {
     }
   }
 
-  async function openRequest(req: ExeatRequest) {
-    setSelected(req);
-    setDocUrl(null);
-    if (req.supporting_document_path) {
-      try {
-        const url = await getDocumentUrl(req.supporting_document_path);
-        setDocUrl(url);
-      } catch { /* silent */ }
-    }
-  }
+  // ✅ New
+function openRequest(req: ExeatRequest) {
+  setSelectedRequest(req);
+  setDocUrl(req.supporting_document_url ?? null);
+}
 
   async function handleAction() {
     if (!selected || !action) return;
@@ -289,4 +284,8 @@ function SecItem({ icon, label, value }: { icon: React.ReactNode; label: string;
       </p>
     </div>
   );
+}
+
+function setSelectedRequest(req: ExeatRequest) {
+  throw new Error('Function not implemented.');
 }
