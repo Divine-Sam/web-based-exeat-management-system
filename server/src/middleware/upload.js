@@ -9,11 +9,13 @@ cloudinary.config({
 });
 
 const storage = new CloudinaryStorage({
-  cloudinary,
-  params: {
-    folder: 'exeat-documents',
-    allowed_formats: ['pdf', 'jpg', 'jpeg', 'png', 'doc', 'docx'],
-    resource_type: 'auto',
+  cloudinary: cloudinary,
+  params: async (req, file) => {
+    return {
+      folder: 'exeat-documents',
+      resource_type: 'auto',
+      public_id: `${Date.now()}-${file.originalname}`,
+    };
   },
 });
 
