@@ -22,6 +22,9 @@ function formatRequest(r) {
     ...obj,
     id: obj._id?.toString(),
     student_id: student?._id?.toString() || obj.student_id?.toString(),
+    supporting_document_url:       obj.supporting_document_url       ?? null,
+    supporting_document_public_id: obj.supporting_document_public_id ?? null,
+    supporting_document_name:      obj.supporting_document_name      ?? null,
     profiles: student ? {
       id: student._id?.toString(),
       full_name: student.full_name,
@@ -30,6 +33,7 @@ function formatRequest(r) {
     } : undefined,
   };
 }
+
 
 // ── Student: Create ────────────────────────────────────────────────────────
 router.post('/', protect, requireRole('student'), upload.single('document'), async (req, res) => {
