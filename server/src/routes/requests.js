@@ -80,8 +80,9 @@ router.post('/', protect, requireRole('student'), upload.single('document'), asy
       parent_name,
       parent_phone,
       parent_relationship,
-      supporting_document_path: req.file.path,
-      supporting_document_name: req.file.originalname,
+      supporting_document_url:       req.file.path,        
+      supporting_document_public_id: req.file.filename,    
+      supporting_document_name:      req.file.originalname,
       status: 'PENDING_HALL_ADMIN',
     });
 
@@ -122,8 +123,15 @@ router.put('/:id', protect, requireRole('student'), upload.single('document'), a
     existing.total_days         = totalDays;
 
     if (req.file) {
-    existing.supporting_document_path = req.file.path;
-    existing.supporting_document_name = req.file.originalname;
+      if (existing.supporting_document_public_id) {
+        const cloudinary = require('cloudinary').v2;
+        await cloudinary.uploader.destroy(existing.supporting_document_public_id, {
+          resource_type: 'raw',
+        });
+      }
+      existing.supporting_document_url       = req.file.path;
+      existing.supporting_document_public_id = req.file.filename;
+      existing.supporting_document_name      = req.file.originalname;
     }
 
     await existing.save();
@@ -141,6 +149,14 @@ router.delete('/:id', protect, requireRole('student'), async (req, res) => {
     const request = await ExeatRequest.findOne({ _id: req.params.id, student_id: req.user._id });
     if (!request) return res.status(404).json({ message: 'Request not found.' });
     if (request.status !== 'PENDING_HALL_ADMIN') return res.status(400).json({ message: 'Only pending requests can be cancelled.' });
+
+    
+    if (request.supporting_document_public_id) {
+      const cloudinary = require('cloudinary').v2;
+      await cloudinary.uploader.destroy(request.supporting_document_public_id, {
+        resource_type: 'raw',
+      });
+    }
 
     await logAudit(req.user._id, 'REQUEST_CANCELLED', request._id, 'PENDING_HALL_ADMIN', null);
     await request.deleteOne();

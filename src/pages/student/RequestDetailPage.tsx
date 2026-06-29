@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
 import { DashboardLayout } from '../../layouts/DashboardLayout';
-import { getRequestById, updateRequest, getDocumentUrl } from '../../services/requestService';
+import { getRequestById, updateRequest } from '../../services/requestService';
 import { ExeatRequest, ReasonCategory } from '../../types';
 import { StatusBadge } from '../../components/StatusBadge';
 import { LoadingSpinner } from '../../components/LoadingSpinner';
@@ -43,9 +43,8 @@ export function RequestDetailPage() {
           setReasonCategory(req.reason_category as ReasonCategory);
           setDepartureDate(req.departure_date);
           setReturnDate(req.return_date);
-          if (req.supporting_document_path) {
-            const url = await getDocumentUrl(req.supporting_document_path);
-            setDocUrl(url);
+          if (req.supporting_document_url) {
+            setDocUrl(req.supporting_document_url);
           }
         }
       } catch {
@@ -73,9 +72,8 @@ export function RequestDetailPage() {
       setRequest(updated);
       setEditing(false);
       showToast('Request updated successfully.', 'success');
-      if (updated.supporting_document_path) {
-        const url = await getDocumentUrl(updated.supporting_document_path);
-        setDocUrl(url);
+      if (updated.supporting_document_url) {
+         setDocUrl(updated.supporting_document_url);
       }
     } catch (err: unknown) {
       showToast(err instanceof Error ? err.message : 'Failed to update request.', 'error');

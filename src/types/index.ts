@@ -30,8 +30,9 @@ export interface ExeatRequest {
   parent_name: string;           
   parent_phone: string;          
   parent_relationship: string;   
-  supporting_document_path: string | null;
-  supporting_document_name: string | null;
+  supporting_document_url?:       string;
+  supporting_document_public_id?: string;
+  supporting_document_name?:      string;
   departure_date: string;
   return_date: string;
   total_days: number;

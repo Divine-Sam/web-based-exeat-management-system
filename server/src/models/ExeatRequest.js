@@ -14,8 +14,10 @@ const exeatRequestSchema = new mongoose.Schema({
   parent_phone: { type: String, required: true, trim: true },
   parent_relationship: { type: String, required: true, trim: true },
   // ─────────────────────────────────────────────────
-  supporting_document_path: { type: String, default: null },
-  supporting_document_name: { type: String, default: null },
+ 
+  supporting_document_url:       { type: String }, // Cloudinary URL
+  supporting_document_public_id: { type: String }, // Cloudinary public_id
+  supporting_document_name:      { type: String },
   departure_date: { type: String, required: true },
   return_date: { type: String, required: true },
   total_days: { type: Number, required: true },

@@ -1,4 +1,4 @@
-const BASE = 'https://web-based-exeat-management-system-1.onrender.com/api';
+const BASE_url = 'https://web-based-exeat-management-system-1.onrender.com/api';
 
 function getToken(): string | null {
   return localStorage.getItem('exeat_token');
@@ -16,7 +16,7 @@ async function request<T>(
   if (token) headers['Authorization'] = `Bearer ${token}`;
   if (!isFormData) headers['Content-Type'] = 'application/json';
 
-  const res = await fetch(`${BASE}${endpoint}`, {
+  const res = await fetch(`${BASE_url}${endpoint}`, {
     method,
     headers,
     body: isFormData
@@ -40,4 +40,4 @@ export const api = {
   putForm: <T>(url: string, form: FormData) => request<T>('PUT', url, form, true),
 };
 
-export { BASE, getToken };
+export { BASE_url, getToken };
