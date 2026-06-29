@@ -66,7 +66,7 @@ export function SecurityDeskPage() {
 
   // ✅ New
 function openRequest(req: ExeatRequest) {
-  setSelectedRequest(req);
+  setSelected(req);
   setDocUrl(req.supporting_document_url ?? null);
 }
 
@@ -286,6 +286,3 @@ function SecItem({ icon, label, value }: { icon: React.ReactNode; label: string;
   );
 }
 
-function setSelectedRequest(req: ExeatRequest) {
-  throw new Error('Function not implemented.');
-}

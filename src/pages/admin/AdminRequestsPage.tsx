@@ -4,7 +4,7 @@ import { useToast } from '../../context/ToastContext';
 import { useSearchParams } from 'react-router-dom';
 import { DashboardLayout } from '../../layouts/DashboardLayout';
 import {
-  getAllRequests, hallApprove, hallReject, deanApprove, deanReject, getDocumentUrl
+  getAllRequests, hallApprove, hallReject, deanApprove, deanReject,
 } from '../../services/requestService';
 import { ExeatRequest, RequestStatus, Role } from '../../types';
 import { StatusBadge } from '../../components/StatusBadge';
@@ -78,16 +78,11 @@ useEffect(() => { load(); }, [statusFilter, search, searchParamsString]);
     else setSearchParams({});
   }
 
-  async function openRequest(req: ExeatRequest) {
-    setSelectedRequest(req);
-    setDocUrl(null);
-    if (req.supporting_document_path) {
-      try {
-        const url = await getDocumentUrl(req.supporting_document_path);
-        setDocUrl(url);
-      } catch { /* silent */ }
-    }
-  }
+ // ✅ New
+function openRequest(req: ExeatRequest) {
+  setSelectedRequest(req);
+  setDocUrl(req.supporting_document_url ?? null);
+}
 
   async function handleAction() {
     if (!selectedRequest || !actionModal) return;
