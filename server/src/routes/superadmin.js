@@ -24,7 +24,7 @@ router.post('/users', protect, requireRole('superadmin'), async (req, res) => {
       return res.status(400).json({ message: 'All fields are required.' });
     }
     const existing = await User.findOne({ crawford_number: crawford_number.toUpperCase() });
-    if (existing) return res.status(409).json({ message: 'Crawford Number already registered.' });
+    if (existing) return res.status(409).json({ message: 'Crawford ID already registered.' });
 
     const user = await User.create({
       full_name,

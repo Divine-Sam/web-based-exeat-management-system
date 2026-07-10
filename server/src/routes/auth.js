@@ -17,7 +17,7 @@ router.post('/register', async (req, res) => {
     }
     const existing = await User.findOne({ crawford_number: crawford_number.toUpperCase() });
     if (existing) {
-      return res.status(409).json({ message: 'Crawford Number already registered.' });
+      return res.status(409).json({ message: 'Crawford ID already registered.' });
     }
     const user = await User.create({ full_name, crawford_number: crawford_number.toUpperCase(), password, role });
     const token = signToken(user._id);
@@ -35,14 +35,14 @@ router.post('/login', async (req, res) => {
     }
     const user = await User.findOne({ crawford_number: crawford_number.toUpperCase() });
     if (!user) {
-      return res.status(401).json({ message: 'Invalid Crawford Number or credentials.' });
+      return res.status(401).json({ message: 'Invalid Crawford ID or credentials.' });
     }
     if (user.role !== role) {
       return res.status(403).json({ message: `This account does not have ${role.replace('_', ' ')} access.` });
     }
     const valid = await user.comparePassword(password);
     if (!valid) {
-      return res.status(401).json({ message: 'Invalid credentials. Please check your Crawford Number and password.' });
+      return res.status(401).json({ message: 'Invalid credentials. Please check your Crawford ID and password.' });
     }
     const token = signToken(user._id);
     res.json({ token, user: user.toProfile() });

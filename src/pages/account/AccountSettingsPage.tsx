@@ -83,7 +83,7 @@ export function AccountSettingsPage() {
 
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1.5">
-              Crawford Number
+              Crawford ID
             </label>
             <input
               type="text"
@@ -91,7 +91,7 @@ export function AccountSettingsPage() {
               disabled
               className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-slate-400 text-sm cursor-not-allowed"
             />
-            <p className="text-xs text-slate-400 mt-1">Crawford number cannot be changed</p>
+            <p className="text-xs text-slate-400 mt-1">Crawford ID cannot be changed</p>
           </div>
 
           <div>

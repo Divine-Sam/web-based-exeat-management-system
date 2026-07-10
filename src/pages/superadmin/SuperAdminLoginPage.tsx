@@ -46,12 +46,12 @@ export function SuperAdminLoginPage() {
         <div className="bg-white rounded-2xl shadow-2xl p-8">
           <form onSubmit={handleSubmit} className="space-y-5">
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1.5">Crawford Number</label>
+              <label className="block text-sm font-medium text-slate-700 mb-1.5">Crawford ID</label>
               <input
                 type="text"
                 value={crawfordNumber}
                 onChange={e => setCrawfordNumber(e.target.value)}
-                placeholder="Enter admin Crawford number"
+                placeholder="Enter admin Crawford ID"
                 className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
                 autoComplete="username"
               />

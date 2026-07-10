@@ -116,7 +116,7 @@ export function SuperAdminUsersPage() {
         <div className="relative">
           <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
           <input type="text" value={search} onChange={e => setSearch(e.target.value)}
-            placeholder="Search by name, Crawford number or role..."
+            placeholder="Search by name, Crawford ID or role..."
             className="w-full pl-10 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent" />
         </div>
 
@@ -172,7 +172,7 @@ export function SuperAdminUsersPage() {
         <div className="space-y-4">
           {[
             { label: 'Full Name', value: newName, set: setNewName, placeholder: 'Enter full name' },
-            { label: 'Crawford Number', value: newCrawford, set: setNewCrawford, placeholder: 'e.g. CU/21/0001' },
+            { label: 'Crawford ID', value: newCrawford, set: setNewCrawford, placeholder: 'e.g. CU/21/0001' },
             { label: 'Password', value: newPassword, set: setNewPassword, placeholder: 'Min 6 characters' },
           ].map(f => (
             <div key={f.label}>
