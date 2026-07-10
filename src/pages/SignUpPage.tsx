@@ -1,17 +1,68 @@
-import { useState, FormEvent } from 'react';
+import { useState, FormEvent, useRef, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { Role } from '../types';
-import { FileText, Eye, EyeOff, UserPlus } from 'lucide-react';
+import { Eye, EyeOff, UserPlus, GraduationCap, Building2, UserCog, Shield, ChevronDown, FileText } from 'lucide-react';
 import { LoadingSpinner } from '../components/LoadingSpinner';
 
-const ROLE_OPTIONS: { value: Role; label: string }[] = [
-  { value: 'student', label: 'Student' },
-  { value: 'hall_admin', label: 'Hall Admin' },
-  { value: 'dean', label: 'Dean' },
-  { value: 'security', label: 'Security' },
+const ROLE_OPTIONS: { value: Role; label: string; icon: React.ReactNode }[] = [
+  { value: 'student',    label: 'Student',    icon: <GraduationCap className="w-4 h-4" /> },
+  { value: 'hall_admin', label: 'Hall Admin', icon: <Building2 className="w-4 h-4" /> },
+  { value: 'dean',       label: 'Dean',       icon: <UserCog className="w-4 h-4" /> },
+  { value: 'security',   label: 'Security',   icon: <Shield className="w-4 h-4" /> },
 ];
+
+function RoleDropdown({ value, onChange }: { value: Role; onChange: (r: Role) => void }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+  const selected = ROLE_OPTIONS.find(o => o.value === value)!;
+
+  useEffect(() => {
+    function handleClick(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    }
+    document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, []);
+
+  return (
+    <div ref={ref} className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen(!open)}
+        className={`w-full flex items-center justify-between px-4 py-3 rounded-xl text-sm transition-all outline-none
+          bg-white/7 border text-white
+          ${open ? 'border-purple-500' : 'border-white/10 hover:border-white/20'}`}
+      >
+        <span className="flex items-center gap-2 text-white/85">
+          {selected.icon}
+          {selected.label}
+        </span>
+        <ChevronDown className={`w-4 h-4 text-white/40 transition-transform ${open ? 'rotate-180' : ''}`} />
+      </button>
+
+      {open && (
+        <div className="absolute top-full left-0 right-0 z-20 mt-0 bg-[#1a1a2e] border border-purple-500/40 border-t-0 rounded-b-xl overflow-hidden">
+          {ROLE_OPTIONS.map(opt => (
+            <button
+              key={opt.value}
+              type="button"
+              onClick={() => { onChange(opt.value); setOpen(false); }}
+              className={`w-full flex items-center gap-3 px-4 py-3 text-sm text-left transition-colors
+                ${opt.value === value
+                  ? 'bg-purple-500/15 text-purple-300'
+                  : 'text-white/70 hover:bg-purple-500/10 hover:text-white'}`}
+            >
+              {opt.icon}
+              {opt.label}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
 
 export function SignUpPage() {
   const { signUp } = useAuth();
@@ -28,7 +79,6 @@ export function SignUpPage() {
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
-
     if (!fullName.trim() || !crawfordNumber.trim() || !password || !confirmPassword) {
       showToast('Please fill in all fields.', 'warning');
       return;
@@ -41,7 +91,6 @@ export function SignUpPage() {
       showToast('Password must be at least 6 characters.', 'warning');
       return;
     }
-
     setLoading(true);
     try {
       await signUp(fullName.trim(), crawfordNumber.trim(), password, role);
@@ -55,101 +104,116 @@ export function SignUpPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-blue-900 flex items-center justify-center p-4">
-      <div className="w-full max-w-md">
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-blue-600 rounded-2xl shadow-lg shadow-blue-500/30 mb-4">
-            <FileText className="w-8 h-8 text-white" />
-          </div>
-          <h1 className="text-2xl font-bold text-white">Create Account</h1>
-          <p className="text-slate-400 text-sm mt-1">Join the Exeat Management System</p>
+    <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden bg-[#0d0d1a]">
+      {/* Colour orbs */}
+      <div className="absolute w-72 h-72 rounded-full bg-purple-700 opacity-25 blur-[80px] -top-20 -left-16 pointer-events-none" />
+      <div className="absolute w-60 h-60 rounded-full bg-pink-500 opacity-20 blur-[80px] top-16 -right-12 pointer-events-none" />
+      <div className="absolute w-52 h-52 rounded-full bg-cyan-500 opacity-15 blur-[70px] bottom-0 left-1/3 pointer-events-none" />
+
+      <div className="relative z-10 w-full max-w-md flex flex-col items-center gap-6">
+        {/* Badge */}
+        <div className="flex items-center gap-2 border border-white/15 bg-white/7 rounded-full px-4 py-1.5 text-xs text-white/70">
+          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 inline-block" />
+          Crawford University
         </div>
 
-        <div className="bg-white rounded-2xl shadow-2xl p-8">
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1.5">Full Name</label>
+        {/* Logo */}
+        <div className="w-14 h-14 rounded-2xl border border-white/15 bg-white/8 flex items-center justify-center">
+          <FileText className="w-6 h-6 text-purple-400" />
+        </div>
+
+        <div className="text-center -mt-2">
+          <h1 className="text-2xl font-medium text-white">Create account</h1>
+          <p className="text-sm text-white/40 mt-1">Join the Exeat Management System</p>
+        </div>
+
+        {/* Card */}
+        <div className="w-full bg-white/5 border border-white/10 rounded-2xl p-6 flex flex-col gap-4 backdrop-blur-sm">
+          <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+            {/* Full Name */}
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs text-white/50 tracking-wide">Full name</label>
               <input
                 type="text"
                 value={fullName}
                 onChange={e => setFullName(e.target.value)}
                 placeholder="Adisa Divine"
-                className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                className="w-full px-4 py-3 rounded-xl bg-white/7 border border-white/10 text-white text-sm placeholder-white/30 outline-none focus:border-purple-500 transition-colors"
               />
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1.5">Crawford Number</label>
+            {/* Crawford Number */}
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs text-white/50 tracking-wide">Crawford number</label>
               <input
                 type="text"
                 value={crawfordNumber}
                 onChange={e => setCrawfordNumber(e.target.value)}
-                placeholder="Crawford Number"
-                className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                placeholder="e.g. 220502012"
+                className="w-full px-4 py-3 rounded-xl bg-white/7 border border-white/10 text-white text-sm placeholder-white/30 outline-none focus:border-purple-500 transition-colors"
               />
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1.5">Password</label>
-              <div className="relative">
+            {/* Password row */}
+            <div className="grid grid-cols-2 gap-3">
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs text-white/50 tracking-wide">Password</label>
+                <div className="relative">
+                  <input
+                    type={showPassword ? 'text' : 'password'}
+                    value={password}
+                    onChange={e => setPassword(e.target.value)}
+                    placeholder="Min 6 chars"
+                    className="w-full px-4 py-3 rounded-xl bg-white/7 border border-white/10 text-white text-sm placeholder-white/30 outline-none focus:border-purple-500 transition-colors pr-9"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-white/30 hover:text-white/60 transition-colors"
+                  >
+                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs text-white/50 tracking-wide">Confirm</label>
                 <input
-                  type={showPassword ? 'text' : 'password'}
-                  value={password}
-                  onChange={e => setPassword(e.target.value)}
-                  placeholder="Min 6 characters"
-                  className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all pr-11"
+                  type="password"
+                  value={confirmPassword}
+                  onChange={e => setConfirmPassword(e.target.value)}
+                  placeholder="Re-enter"
+                  className="w-full px-4 py-3 rounded-xl bg-white/7 border border-white/10 text-white text-sm placeholder-white/30 outline-none focus:border-purple-500 transition-colors"
                 />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
-                >
-                  {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                </button>
               </div>
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1.5">Confirm Password</label>
-              <input
-                type="password"
-                value={confirmPassword}
-                onChange={e => setConfirmPassword(e.target.value)}
-                placeholder="Re-enter your password"
-                className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-              />
+            {/* Role */}
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs text-white/50 tracking-wide">Role</label>
+              <RoleDropdown value={role} onChange={setRole} />
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1.5">Role</label>
-              <select
-                value={role}
-                onChange={e => setRole(e.target.value as Role)}
-                className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all bg-white"
-              >
-                {ROLE_OPTIONS.map(o => (
-                  <option key={o.value} value={o.value}>{o.label}</option>
-                ))}
-              </select>
-            </div>
-
+            {/* Submit */}
             <button
               type="submit"
               disabled={loading}
-              className="w-full flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-300 text-white font-semibold py-2.5 px-4 rounded-xl transition-colors shadow-sm shadow-blue-200 mt-2"
+              className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl font-medium text-sm text-white transition-opacity disabled:opacity-60"
+              style={{ background: 'linear-gradient(135deg, #7c3aed, #ec4899)' }}
             >
-              {loading ? <LoadingSpinner size="sm" /> : <UserPlus className="w-5 h-5" />}
-              {loading ? 'Creating account...' : 'Create Account'}
+              {loading ? <LoadingSpinner size="sm" /> : <UserPlus className="w-4 h-4" />}
+              {loading ? 'Creating account...' : 'Create account'}
             </button>
           </form>
-
-          <p className="text-center text-sm text-slate-500 mt-6">
-            Already have an account?{' '}
-            <Link to="/login" className="text-blue-600 hover:text-blue-700 font-medium transition-colors">
-              Sign in
-            </Link>
-          </p>
         </div>
+
+        <p className="text-xs text-white/30 text-center">
+          Already have an account?{' '}
+          <Link to="/login" className="text-purple-400 hover:text-purple-300 transition-colors">
+            Sign in
+          </Link>
+        </p>
+
+        <p className="text-xs text-white/20">Secure login · Crawford University Exeat System</p>
       </div>
     </div>
   );
