@@ -13,6 +13,18 @@ const ROLE_OPTIONS: { value: Role; label: string; icon: React.ReactNode }[] = [
   { value: 'security',   label: 'Security',   icon: <Shield className="w-4 h-4" /> },
 ];
 
+const inputStyle: React.CSSProperties = {
+  width: '100%',
+  padding: '12px 16px',
+  borderRadius: '12px',
+  background: 'rgba(255,255,255,0.08)',
+  border: '1px solid rgba(255,255,255,0.15)',
+  color: '#ffffff',
+  fontSize: '14px',
+  outline: 'none',
+  transition: 'border-color 0.2s',
+};
+
 function RoleDropdown({ value, onChange }: { value: Role; onChange: (r: Role) => void }) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -31,11 +43,16 @@ function RoleDropdown({ value, onChange }: { value: Role; onChange: (r: Role) =>
       <button
         type="button"
         onClick={() => setOpen(!open)}
-        className={`w-full flex items-center justify-between px-4 py-3 rounded-xl text-sm transition-all outline-none
-          bg-white/7 border text-white
-          ${open ? 'border-purple-500' : 'border-white/10 hover:border-white/20'}`}
+        style={{
+          ...inputStyle,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          cursor: 'pointer',
+          borderColor: open ? '#7c3aed' : 'rgba(255,255,255,0.15)',
+        }}
       >
-        <span className="flex items-center gap-2 text-white/85">
+        <span className="flex items-center gap-2 text-white">
           {selected.icon}
           {selected.label}
         </span>
@@ -43,7 +60,7 @@ function RoleDropdown({ value, onChange }: { value: Role; onChange: (r: Role) =>
       </button>
 
       {open && (
-        <div className="absolute top-full left-0 right-0 z-20 mt-0 bg-[#1a1a2e] border border-purple-500/40 border-t-0 rounded-b-xl overflow-hidden">
+        <div className="absolute top-full left-0 right-0 z-20 bg-[#1a1a2e] border border-purple-500/40 border-t-0 rounded-b-xl overflow-hidden">
           {ROLE_OPTIONS.map(opt => (
             <button
               key={opt.value}
@@ -94,20 +111,17 @@ export function LoginPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden bg-[#0d0d1a]">
-      {/* Colour orbs */}
       <div className="absolute w-72 h-72 rounded-full bg-purple-700 opacity-25 blur-[80px] -top-20 -left-16 pointer-events-none" />
       <div className="absolute w-60 h-60 rounded-full bg-pink-500 opacity-20 blur-[80px] top-16 -right-12 pointer-events-none" />
       <div className="absolute w-52 h-52 rounded-full bg-cyan-500 opacity-15 blur-[70px] bottom-0 left-1/3 pointer-events-none" />
 
       <div className="relative z-10 w-full max-w-md flex flex-col items-center gap-6">
-        {/* Badge */}
-        <div className="flex items-center gap-2 border border-white/15 bg-white/7 rounded-full px-4 py-1.5 text-xs text-white/70">
+        <div className="flex items-center gap-2 border border-white/15 bg-white/5 rounded-full px-4 py-1.5 text-xs text-white/70">
           <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 inline-block" />
           Crawford University
         </div>
 
-        {/* Logo */}
-        <div className="w-14 h-14 rounded-2xl border border-white/15 bg-white/8 flex items-center justify-center">
+        <div className="w-14 h-14 rounded-2xl border border-white/15 bg-white/5 flex items-center justify-center">
           <FileText className="w-6 h-6 text-purple-400" />
         </div>
 
@@ -116,10 +130,8 @@ export function LoginPage() {
           <p className="text-sm text-white/40 mt-1">Sign in to your account</p>
         </div>
 
-        {/* Card */}
-        <div className="w-full bg-white/5 border border-white/10 rounded-2xl p-6 flex flex-col gap-4 backdrop-blur-sm">
+        <div className="w-full bg-white/5 border border-white/10 rounded-2xl p-6 flex flex-col gap-4">
           <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-            {/* Crawford Number */}
             <div className="flex flex-col gap-1.5">
               <label className="text-xs text-white/50 tracking-wide">Crawford number</label>
               <input
@@ -128,11 +140,10 @@ export function LoginPage() {
                 onChange={e => setCrawfordNumber(e.target.value)}
                 placeholder="e.g. 220502012"
                 autoComplete="username"
-                className="w-full px-4 py-3 rounded-xl bg-white/10 border border-white/20 text-white text-sm placeholder-white/45 outline-none focus:border-purple-500 transition-colors"
+                style={inputStyle}
               />
             </div>
 
-            {/* Password */}
             <div className="flex flex-col gap-1.5">
               <label className="text-xs text-white/50 tracking-wide">Password</label>
               <div className="relative">
@@ -142,25 +153,23 @@ export function LoginPage() {
                   onChange={e => setPassword(e.target.value)}
                   placeholder="Enter your password"
                   autoComplete="current-password"
-                  className="w-full px-4 py-3 rounded-xl bg-white/10 border border-white/20 text-white text-sm placeholder-white/45 outline-none focus:border-purple-500 transition-colors pr-11"
+                  style={{ ...inputStyle, paddingRight: '44px' }}
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-white/30 hover:text-white/60 transition-colors"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-white/40 hover:text-white/70 transition-colors"
                 >
                   {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
               </div>
             </div>
 
-            {/* Role */}
             <div className="flex flex-col gap-1.5">
               <label className="text-xs text-white/50 tracking-wide">Role</label>
               <RoleDropdown value={role} onChange={setRole} />
             </div>
 
-            {/* Submit */}
             <button
               type="submit"
               disabled={loading}
@@ -182,6 +191,11 @@ export function LoginPage() {
 
         <p className="text-xs text-white/20">Secure login · Crawford University Exeat System</p>
       </div>
+
+      <style>{`
+        input::placeholder { color: rgba(255,255,255,0.4); }
+        input:focus { border-color: #7c3aed !important; }
+      `}</style>
     </div>
   );
 }
