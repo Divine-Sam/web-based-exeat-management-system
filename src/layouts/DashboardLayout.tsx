@@ -4,7 +4,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import {
   LayoutDashboard, FileText, PlusCircle, ClipboardList, Shield,
-  LogOut, Menu, ChevronRight, Bell, Settings
+  LogOut, Menu, ChevronRight, Bell, Settings, X
 } from 'lucide-react';
 import { Role } from '../types';
 
@@ -16,30 +16,29 @@ interface NavItem {
 }
 
 const NAV_ITEMS: NavItem[] = [
-  { label: 'Dashboard',       path: '/dashboard',        icon: <LayoutDashboard className="w-5 h-5" />, roles: ['student', 'hall_admin', 'dean', 'security'] },
-  { label: 'New Request',     path: '/requests/new',     icon: <PlusCircle className="w-5 h-5" />,     roles: ['student'] },
-  { label: 'My Requests',     path: '/requests',         icon: <FileText className="w-5 h-5" />,       roles: ['student'] },
-  { label: 'Review Requests', path: '/admin/requests',   icon: <ClipboardList className="w-5 h-5" />, roles: ['hall_admin', 'dean'] },
-  { label: 'Security Desk',   path: '/security/requests',icon: <Shield className="w-5 h-5" />,        roles: ['security'] },
-  // ✅ Audit Logs removed
-  { label: 'Account Settings',path: '/account/settings', icon: <Settings className="w-5 h-5" />,    roles: ['student', 'hall_admin', 'dean', 'security'] },
-  { label: 'Super Admin', path: '/superadmin', icon: <Shield className="w-5 h-5" />, roles: ['superadmin'] },
+  { label: 'Dashboard',        path: '/dashboard',         icon: <LayoutDashboard className="w-4 h-4" />, roles: ['student', 'hall_admin', 'dean', 'security'] },
+  { label: 'New Request',      path: '/requests/new',      icon: <PlusCircle className="w-4 h-4" />,     roles: ['student'] },
+  { label: 'My Requests',      path: '/requests',          icon: <FileText className="w-4 h-4" />,       roles: ['student'] },
+  { label: 'Review Requests',  path: '/admin/requests',    icon: <ClipboardList className="w-4 h-4" />, roles: ['hall_admin', 'dean'] },
+  { label: 'Security Desk',    path: '/security/requests', icon: <Shield className="w-4 h-4" />,        roles: ['security'] },
+  { label: 'Account Settings', path: '/account/settings',  icon: <Settings className="w-4 h-4" />,      roles: ['student', 'hall_admin', 'dean', 'security'] },
+  { label: 'Super Admin',      path: '/superadmin',        icon: <Shield className="w-4 h-4" />,        roles: ['superadmin'] },
 ];
 
 const ROLE_LABELS: Record<Role, string> = {
-  student:     'Student',
-  hall_admin:  'Hall Admin',
-  dean:        'Dean',
-  security:    'Security',
-  superadmin: 'Super Admin',  // ✅ add
+  student:    'Student',
+  hall_admin: 'Hall Admin',
+  dean:       'Dean',
+  security:   'Security',
+  superadmin: 'Super Admin',
 };
 
 const ROLE_COLORS: Record<Role, string> = {
-  student:     'bg-blue-100 text-blue-700',
-  hall_admin:  'bg-amber-100 text-amber-700',
-  dean:        'bg-emerald-100 text-emerald-700',
-  security:    'bg-red-100 text-red-700',
-  superadmin: 'bg-purple-100 text-purple-700',  // ✅ add
+  student:    'bg-purple-500/20 text-purple-300 border border-purple-500/30',
+  hall_admin: 'bg-amber-500/20 text-amber-300 border border-amber-500/30',
+  dean:       'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30',
+  security:   'bg-red-500/20 text-red-300 border border-red-500/30',
+  superadmin: 'bg-pink-500/20 text-pink-300 border border-pink-500/30',
 };
 
 export function DashboardLayout({ children }: { children: ReactNode }) {
@@ -53,25 +52,17 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
   const role = user?.profile.role as Role;
   const visibleNav = NAV_ITEMS.filter(n => n.roles.includes(role));
 
-  // ✅ Fetch pending count for bell (hall_admin = pendingHallAdmin, dean = pendingDean)
   useEffect(() => {
     if (role !== 'hall_admin' && role !== 'dean') return;
-
-   const fetchBellCount = async () => {
-  try {
-    const data = await api.get<{
-      pendingHallAdmin: number;
-      pendingDean: number;
-    }>('/requests/admin/stats');
-    if (role === 'hall_admin') setBellCount(data.pendingHallAdmin ?? 0);
-    if (role === 'dean')       setBellCount(data.pendingDean ?? 0);
-  } catch {
-    // silently fail — don't redirect on error
-  }
-};
-
+    const fetchBellCount = async () => {
+      try {
+        const data = await api.get<{ pendingHallAdmin: number; pendingDean: number }>('/requests/admin/stats');
+        if (role === 'hall_admin') setBellCount(data.pendingHallAdmin ?? 0);
+        if (role === 'dean')       setBellCount(data.pendingDean ?? 0);
+      } catch { /* silent */ }
+    };
     fetchBellCount();
-    const interval = setInterval(fetchBellCount, 30_000); // refresh every 30s
+    const interval = setInterval(fetchBellCount, 30_000);
     return () => clearInterval(interval);
   }, [role]);
 
@@ -80,21 +71,26 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
     navigate('/login');
   }
 
-  const Sidebar = () => (
-    <div className="flex flex-col h-full">
-      <div className="px-6 py-6 border-b border-slate-100">
-        <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-xl bg-blue-600 flex items-center justify-center">
-            <FileText className="w-5 h-5 text-white" />
-          </div>
-          <div>
-            <p className="text-sm font-bold text-slate-800 leading-tight">Exeat</p>
-            <p className="text-xs text-slate-500 leading-tight">Management</p>
-          </div>
+  const currentLabel = visibleNav.find(
+    n => location.pathname === n.path || location.pathname.startsWith(n.path + '/')
+  )?.label ?? 'Dashboard';
+
+  const SidebarContent = () => (
+    <div className="flex flex-col h-full" style={{ background: '#0d0d1a' }}>
+      {/* Logo */}
+      <div className="px-5 py-5 flex items-center gap-3" style={{ borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
+        <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
+          style={{ background: 'linear-gradient(135deg,#7c3aed,#ec4899)' }}>
+          <FileText className="w-4 h-4 text-white" />
+        </div>
+        <div>
+          <p className="text-sm font-medium text-white leading-tight">Exeat</p>
+          <p className="text-xs leading-tight" style={{ color: 'rgba(255,255,255,0.4)' }}>Management</p>
         </div>
       </div>
 
-      <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
+      {/* Nav */}
+      <nav className="flex-1 px-3 py-4 flex flex-col gap-1 overflow-y-auto">
         {visibleNav.map(item => {
           const active =
             location.pathname === item.path ||
@@ -104,31 +100,44 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
               key={item.path}
               to={item.path}
               onClick={() => setMobileOpen(false)}
-              className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all group ${
-                active
-                  ? 'bg-blue-600 text-white shadow-sm shadow-blue-200'
-                  : 'text-slate-600 hover:bg-slate-100 hover:text-slate-800'
-              }`}
+              className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all"
+              style={active ? {
+                background: 'linear-gradient(135deg,rgba(124,58,237,0.25),rgba(236,72,153,0.15))',
+                color: '#c4b5fd',
+                border: '1px solid rgba(124,58,237,0.25)',
+              } : {
+                color: 'rgba(255,255,255,0.5)',
+              }}
             >
               {item.icon}
               <span className="flex-1">{item.label}</span>
-              {active && <ChevronRight className="w-4 h-4 opacity-60" />}
+              {active && <ChevronRight className="w-3.5 h-3.5 opacity-50" />}
             </Link>
           );
         })}
       </nav>
 
-      <div className="px-3 pb-6 pt-3 border-t border-slate-100">
-        <div className="px-3 py-3 mb-2 bg-slate-50 rounded-xl">
-          <p className="text-sm font-semibold text-slate-800 truncate">{user?.profile.full_name}</p>
-          <p className="text-xs text-slate-500 truncate mt-0.5">{user?.profile.crawford_number}</p>
-          <span className={`inline-block mt-1.5 text-xs font-medium px-2 py-0.5 rounded-full ${ROLE_COLORS[role]}`}>
+      {/* Footer */}
+      <div className="px-3 pb-5 pt-3" style={{ borderTop: '1px solid rgba(255,255,255,0.07)' }}>
+        <div className="rounded-xl p-3 mb-2" style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)' }}>
+          <p className="text-sm font-medium text-white truncate">{user?.profile.full_name}</p>
+          <p className="text-xs truncate mt-0.5" style={{ color: 'rgba(255,255,255,0.4)' }}>{user?.profile.crawford_number}</p>
+          <span className={`inline-block mt-2 text-xs font-medium px-2 py-0.5 rounded-full ${ROLE_COLORS[role]}`}>
             {ROLE_LABELS[role]}
           </span>
         </div>
         <button
           onClick={handleLogout}
-          className="w-full flex items-center gap-2 px-3 py-2.5 rounded-xl text-sm font-medium text-slate-600 hover:bg-red-50 hover:text-red-600 transition-colors"
+          className="w-full flex items-center gap-2 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors"
+          style={{ color: 'rgba(255,255,255,0.4)' }}
+          onMouseEnter={e => {
+            (e.currentTarget as HTMLButtonElement).style.background = 'rgba(239,68,68,0.1)';
+            (e.currentTarget as HTMLButtonElement).style.color = '#f87171';
+          }}
+          onMouseLeave={e => {
+            (e.currentTarget as HTMLButtonElement).style.background = 'transparent';
+            (e.currentTarget as HTMLButtonElement).style.color = 'rgba(255,255,255,0.4)';
+          }}
         >
           <LogOut className="w-4 h-4" />
           Sign out
@@ -138,82 +147,78 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
   );
 
   return (
-    <div className="flex h-screen bg-slate-50">
+    <div className="flex h-screen" style={{ background: '#0f0f1e' }}>
       {/* Desktop sidebar */}
-      <aside className="hidden lg:flex flex-col w-64 bg-white border-r border-slate-100 flex-shrink-0">
-        <Sidebar />
+      <aside className="hidden lg:flex flex-col w-56 flex-shrink-0" style={{ borderRight: '1px solid rgba(255,255,255,0.07)' }}>
+        <SidebarContent />
       </aside>
 
       {/* Mobile sidebar overlay */}
       {mobileOpen && (
         <div className="fixed inset-0 z-50 lg:hidden">
-          <div className="absolute inset-0 bg-black/40" onClick={() => setMobileOpen(false)} />
-          <aside className="relative w-72 h-full bg-white shadow-xl">
-            <Sidebar />
+          <div className="absolute inset-0 bg-black/60" onClick={() => setMobileOpen(false)} />
+          <aside className="relative w-64 h-full shadow-2xl">
+            <button
+              onClick={() => setMobileOpen(false)}
+              className="absolute top-4 right-4 z-10 p-1.5 rounded-lg"
+              style={{ background: 'rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.6)' }}
+            >
+              <X className="w-4 h-4" />
+            </button>
+            <SidebarContent />
           </aside>
         </div>
       )}
 
-      {/* Main content */}
+      {/* Main */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-        {/* Top bar */}
-        <header className="bg-white border-b border-slate-100 px-4 lg:px-6 h-16 flex items-center justify-between flex-shrink-0">
+        {/* Topbar */}
+        <header
+          className="h-14 px-4 lg:px-6 flex items-center justify-between flex-shrink-0"
+          style={{ background: '#0d0d1a', borderBottom: '1px solid rgba(255,255,255,0.07)' }}
+        >
           <button
             onClick={() => setMobileOpen(true)}
-            className="lg:hidden p-2 rounded-lg text-slate-500 hover:bg-slate-100 transition-colors"
+            className="lg:hidden p-2 rounded-lg transition-colors"
+            style={{ color: 'rgba(255,255,255,0.4)' }}
           >
             <Menu className="w-5 h-5" />
           </button>
 
-          <div className="hidden lg:block">
-            <h1 className="text-sm font-medium text-slate-500">
-              {visibleNav.find(
-                n => location.pathname === n.path || location.pathname.startsWith(n.path + '/')
-              )?.label ?? 'Dashboard'}
-            </h1>
-          </div>
+          <p className="hidden lg:block text-sm" style={{ color: 'rgba(255,255,255,0.4)' }}>{currentLabel}</p>
 
           <div className="flex items-center gap-3 ml-auto relative">
-
-            {/* ✅ Notification Bell — only for hall_admin and dean */}
+            {/* Bell */}
             {(role === 'hall_admin' || role === 'dean') && (
               <div className="relative">
                 <button
-                  onClick={() => {
-                    setShowBellDropdown(prev => !prev);
-                    navigate('/admin/requests');
-                  }}
-                  className="relative p-2 rounded-lg text-slate-400 hover:bg-slate-100 transition-colors"
-                  title="Pending requests"
+                  onClick={() => { setShowBellDropdown(prev => !prev); navigate('/admin/requests'); }}
+                  className="relative w-8 h-8 rounded-lg flex items-center justify-center transition-colors"
+                  style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.4)' }}
                 >
-                  <Bell className="w-5 h-5" />
+                  <Bell className="w-4 h-4" />
                   {bellCount > 0 && (
-                    <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center px-1">
+                    <span className="absolute -top-1 -right-1 min-w-[16px] h-4 bg-red-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center px-1">
                       {bellCount > 99 ? '99+' : bellCount}
                     </span>
                   )}
                 </button>
-
-                {/* ✅ Dropdown tooltip */}
                 {showBellDropdown && (
                   <div
-                    className="absolute right-0 top-11 w-64 bg-white border border-slate-200 rounded-xl shadow-lg z-50 p-4"
+                    className="absolute right-0 top-11 w-60 rounded-xl shadow-2xl z-50 p-4"
+                    style={{ background: '#1a1a2e', border: '1px solid rgba(255,255,255,0.1)' }}
                     onMouseLeave={() => setShowBellDropdown(false)}
                   >
-                    <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">
-                      Pending Review
-                    </p>
+                    <p className="text-xs font-medium uppercase tracking-wide mb-2" style={{ color: 'rgba(255,255,255,0.4)' }}>Pending Review</p>
                     <div className="flex items-center justify-between">
-                      <span className="text-sm text-slate-700">
+                      <span className="text-sm" style={{ color: 'rgba(255,255,255,0.7)' }}>
                         {role === 'hall_admin' ? 'Awaiting your approval' : 'Awaiting dean approval'}
                       </span>
-                      <span className="text-lg font-bold text-amber-600">{bellCount}</span>
+                      <span className="text-lg font-bold text-amber-400">{bellCount}</span>
                     </div>
-                    <Link
-                      to="/admin/requests"
-                      onClick={() => setShowBellDropdown(false)}
-                      className="mt-3 block text-center text-xs text-blue-600 hover:underline font-medium"
-                    >
+                    <Link to="/admin/requests" onClick={() => setShowBellDropdown(false)}
+                      className="mt-3 block text-center text-xs font-medium transition-colors"
+                      style={{ color: '#a78bfa' }}>
                       View all →
                     </Link>
                   </div>
@@ -221,12 +226,17 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
               </div>
             )}
 
-            <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-white text-sm font-semibold">
+            {/* Avatar */}
+            <div
+              className="w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-medium"
+              style={{ background: 'linear-gradient(135deg,#7c3aed,#ec4899)' }}
+            >
               {user?.profile.full_name.charAt(0).toUpperCase()}
             </div>
           </div>
         </header>
 
+        {/* Content */}
         <main className="flex-1 overflow-y-auto p-4 lg:p-6">
           {children}
         </main>

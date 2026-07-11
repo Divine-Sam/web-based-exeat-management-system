@@ -133,7 +133,7 @@ export function LoginPage() {
         <div className="w-full bg-white/5 border border-white/10 rounded-2xl p-6 flex flex-col gap-4">
           <form onSubmit={handleSubmit} className="flex flex-col gap-4">
             <div className="flex flex-col gap-1.5">
-              <label className="text-xs text-white/50 tracking-wide">Crawford number</label>
+              <label className="text-xs text-white/50 tracking-wide">Crawford ID</label>
               <input
                 type="text"
                 value={crawfordNumber}
