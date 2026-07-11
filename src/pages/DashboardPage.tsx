@@ -9,46 +9,52 @@ import {
   Users, Shield, AlertCircle
 } from 'lucide-react';
 
+const statCardStyle: React.CSSProperties = {
+  background: 'rgba(255,255,255,0.05)',
+  border: '1px solid rgba(255,255,255,0.08)',
+  borderRadius: '14px',
+  padding: '16px',
+  display: 'flex',
+  flexDirection: 'column',
+  gap: '8px',
+  transition: 'all 0.2s',
+  cursor: 'pointer',
+  textDecoration: 'none',
+};
+
 interface StatCard {
   label: string;
   value: number | string;
   icon: React.ReactNode;
-  color: string;
-  bg: string;
+  gradient: string;
+  iconBg: string;
   to?: string;
   sub?: string;
 }
 
 function StatCardItem({ card }: { card: StatCard }) {
   const content = (
-    <div className="flex items-start justify-between">
-      <div>
-        <p className="text-sm text-slate-500 font-medium">{card.label}</p>
-        <p className={`text-3xl font-bold mt-1 ${card.color}`}>{card.value}</p>
-        {card.sub && <p className="text-xs text-slate-400 mt-1">{card.sub}</p>}
-      </div>
-      <div className={`w-11 h-11 rounded-xl ${card.bg} flex items-center justify-center`}>
+    <>
+      <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: card.iconBg, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         {card.icon}
       </div>
-    </div>
+      <div style={{ fontSize: '24px', fontWeight: '500', color: '#fff', marginTop: '4px' }}>{card.value}</div>
+      <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.5)' }}>{card.label}</div>
+      {card.sub && <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.3)' }}>{card.sub}</div>}
+      {card.to && <div style={{ fontSize: '11px', color: '#a78bfa', marginTop: '4px' }}>View →</div>}
+    </>
   );
 
   if (card.to) {
     return (
-      <Link
-        to={card.to}
-        className="bg-white rounded-2xl p-5 border border-slate-100 shadow-sm hover:shadow-md hover:border-blue-200 hover:scale-[1.02] transition-all cursor-pointer block"
-      >
+      <Link to={card.to} style={{ ...statCardStyle, background: card.gradient }}>
         {content}
-        <p className="text-xs text-slate-400 mt-3 flex items-center gap-1">
-          View requests <ArrowRight className="w-3 h-3" />
-        </p>
       </Link>
     );
   }
 
   return (
-    <div className="bg-white rounded-2xl p-5 border border-slate-100 shadow-sm hover:shadow-md transition-shadow">
+    <div style={{ ...statCardStyle, background: card.gradient }}>
       {content}
     </div>
   );
@@ -92,107 +98,155 @@ export function DashboardPage() {
   });
 
   const n = (key: string): number => (stats[key] as number) ?? 0;
+  const firstName = user?.profile.full_name.split(' ')[0];
+
+  const getGreeting = () => {
+    const h = new Date().getHours();
+    if (h < 12) return 'Good morning';
+    if (h < 17) return 'Good afternoon';
+    return 'Good evening';
+  };
 
   return (
     <DashboardLayout>
-      <div className="space-y-6">
+      <div className="flex flex-col gap-5">
 
-        <div className="bg-gradient-to-r from-blue-600 to-blue-700 rounded-2xl p-6 text-white shadow-lg shadow-blue-100">
-          <h2 className="text-xl font-bold">
-            Welcome back, {user?.profile.full_name.split(' ')[0]}
-          </h2>
-          <p className="text-blue-200 text-sm mt-1">
-            {role === 'student'    && `Crawford No: ${user?.profile.crawford_number} ΓÇö Session: ${stats.session}`}
-            {role === 'hall_admin' && today}
-            {role === 'dean'       && today}
-            {role === 'security'   && 'Manage student check-in and check-out'}
-          </p>
+        {/* Welcome Banner */}
+        <div
+          className="rounded-2xl p-5 flex items-center justify-between"
+          style={{ background: 'linear-gradient(135deg, #7c3aed 0%, #ec4899 60%, #f97316 100%)' }}
+        >
+          <div>
+            <h2 className="text-lg font-medium text-white">{getGreeting()}, {firstName} 👋</h2>
+            <p className="text-sm mt-1" style={{ color: 'rgba(255,255,255,0.65)' }}>
+              {role === 'student'    && `Crawford No: ${user?.profile.crawford_number} · Session: ${stats.session}`}
+              {role === 'hall_admin' && today}
+              {role === 'dean'       && today}
+              {role === 'security'   && 'Manage student check-in and check-out'}
+            </p>
+          </div>
+          <div
+            className="w-10 h-10 rounded-full flex items-center justify-center text-white font-medium text-base flex-shrink-0"
+            style={{ background: 'rgba(255,255,255,0.25)', border: '2px solid rgba(255,255,255,0.4)' }}
+          >
+            {firstName?.charAt(0).toUpperCase()}
+          </div>
         </div>
 
-        {/* Student */}
+        {/* ── STUDENT ── */}
         {role === 'student' && (
           <>
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-              <StatCardItem card={{ label: 'Total This Session', value: n('total'), icon: <FileText className="w-5 h-5 text-blue-600" />, color: 'text-blue-600', bg: 'bg-blue-50', to: '/requests' }} />
-              <StatCardItem card={{ label: 'Pending Review', value: n('pending'), icon: <Clock className="w-5 h-5 text-amber-600" />, color: 'text-amber-600', bg: 'bg-amber-50', to: '/requests?status=pending' }} />
-              <StatCardItem card={{ label: 'Approved', value: n('approved'), icon: <CheckCircle className="w-5 h-5 text-emerald-600" />, color: 'text-emerald-600', bg: 'bg-emerald-50', to: '/requests?status=approved' }} />
-              <StatCardItem card={{ label: 'Rejected', value: n('rejected'), icon: <XCircle className="w-5 h-5 text-red-500" />, color: 'text-red-500', bg: 'bg-red-50', to: '/requests?status=rejected' }} />
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+              <StatCardItem card={{ label: 'Total This Session', value: n('total'), icon: <FileText className="w-4 h-4 text-white" />, gradient: 'linear-gradient(135deg,#4f46e5,#7c3aed)', iconBg: 'rgba(255,255,255,0.2)', to: '/requests' }} />
+              <StatCardItem card={{ label: 'Pending Review', value: n('pending'), icon: <Clock className="w-4 h-4 text-white" />, gradient: 'linear-gradient(135deg,#d97706,#f59e0b)', iconBg: 'rgba(255,255,255,0.2)', to: '/requests?status=pending' }} />
+              <StatCardItem card={{ label: 'Approved', value: n('approved'), icon: <CheckCircle className="w-4 h-4 text-white" />, gradient: 'linear-gradient(135deg,#059669,#10b981)', iconBg: 'rgba(255,255,255,0.2)', to: '/requests?status=approved' }} />
+              <StatCardItem card={{ label: 'Rejected', value: n('rejected'), icon: <XCircle className="w-4 h-4 text-white" />, gradient: 'linear-gradient(135deg,#dc2626,#f43f5e)', iconBg: 'rgba(255,255,255,0.2)', to: '/requests?status=rejected' }} />
             </div>
-            <div className="bg-white rounded-2xl p-5 border border-slate-100 shadow-sm">
+
+            {/* Session Limit */}
+            <div style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '14px', padding: '16px' }}>
               <div className="flex items-center justify-between mb-3">
-                <h3 className="font-semibold text-slate-800">Session Limit</h3>
-                <span className="text-sm text-slate-500">{n('total')} / 5 used</span>
+                <span className="text-sm font-medium text-white">Session limit</span>
+                <span className="text-sm font-medium" style={{ background: 'linear-gradient(90deg,#7c3aed,#ec4899)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+                  {n('total')} / 5 used
+                </span>
               </div>
-              <div className="w-full bg-slate-100 rounded-full h-2.5">
-                <div className={`h-2.5 rounded-full transition-all ${n('total') >= 5 ? 'bg-red-500' : n('total') >= 3 ? 'bg-amber-500' : 'bg-emerald-500'}`}
-                  style={{ width: `${Math.min(100, (n('total') / 5) * 100)}%` }} />
+              <div style={{ background: 'rgba(255,255,255,0.08)', borderRadius: '99px', height: '7px', overflow: 'hidden' }}>
+                <div style={{
+                  height: '100%',
+                  borderRadius: '99px',
+                  width: `${Math.min(100, (n('total') / 5) * 100)}%`,
+                  background: n('total') >= 5 ? 'linear-gradient(90deg,#dc2626,#f43f5e)' : n('total') >= 3 ? 'linear-gradient(90deg,#d97706,#f59e0b)' : 'linear-gradient(90deg,#7c3aed,#ec4899)',
+                  transition: 'width 0.5s ease',
+                }} />
               </div>
-              <p className="text-xs text-slate-500 mt-2">
-                {n('remaining') > 0 ? `${n('remaining')} request(s) remaining this session` : 'Session limit reached ΓÇö no more requests can be submitted'}
+              <p className="text-xs mt-2" style={{ color: 'rgba(255,255,255,0.35)' }}>
+                {n('remaining') > 0 ? `${n('remaining')} request(s) remaining this session` : 'Session limit reached — no more requests can be submitted'}
               </p>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <Link to="/requests/new" className="flex items-center justify-between bg-blue-600 hover:bg-blue-700 text-white rounded-2xl p-5 transition-colors shadow-sm shadow-blue-200 group">
-                <div><p className="font-semibold">New Exeat Request</p><p className="text-blue-200 text-sm mt-0.5">Submit a new leave request</p></div>
-                <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+
+            {/* Action Cards */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <Link
+                to="/requests/new"
+                className="flex items-center justify-between rounded-2xl p-5 group"
+                style={{ background: 'linear-gradient(135deg,#7c3aed,#ec4899)', textDecoration: 'none' }}
+              >
+                <div>
+                  <p className="font-medium text-white text-sm">New exeat request</p>
+                  <p className="text-xs mt-0.5" style={{ color: 'rgba(255,255,255,0.65)' }}>Submit a new leave request</p>
+                </div>
+                <ArrowRight className="w-5 h-5 text-white group-hover:translate-x-1 transition-transform" />
               </Link>
-              <Link to="/requests" className="flex items-center justify-between bg-white hover:bg-slate-50 text-slate-700 rounded-2xl p-5 border border-slate-200 transition-colors group">
-                <div><p className="font-semibold">View My Requests</p><p className="text-slate-400 text-sm mt-0.5">Track all your submissions</p></div>
-                <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform text-slate-400" />
+              <Link
+                to="/requests"
+                className="flex items-center justify-between rounded-2xl p-5 group"
+                style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)', textDecoration: 'none' }}
+              >
+                <div>
+                  <p className="font-medium text-white text-sm">My requests</p>
+                  <p className="text-xs mt-0.5" style={{ color: 'rgba(255,255,255,0.4)' }}>Track all your submissions</p>
+                </div>
+                <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" style={{ color: 'rgba(255,255,255,0.3)' }} />
               </Link>
             </div>
           </>
         )}
 
-        {/* Hall Admin */}
+        {/* ── HALL ADMIN ── */}
         {role === 'hall_admin' && (
           <>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <StatCardItem card={{ label: 'Requests Today', value: n('todayTotal'), icon: <FileText className="w-5 h-5 text-blue-600" />, color: 'text-blue-600', bg: 'bg-blue-50', sub: 'New pending requests today', to: '/admin/requests?status=PENDING_HALL_ADMIN' }} />
-              <StatCardItem card={{ label: 'Awaiting Dean Approval', value: n('pendingDean'), icon: <Users className="w-5 h-5 text-blue-500" />, color: 'text-blue-500', bg: 'bg-blue-50', sub: 'Approved by you ΓÇö pending dean', to: '/admin/requests?status=APPROVED_BY_HALL_ADMIN' }} />
-              <StatCardItem card={{ label: 'Pending Your Review', value: n('pendingHallAdmin'), icon: <Clock className="w-5 h-5 text-amber-600" />, color: 'text-amber-600', bg: 'bg-amber-50', sub: 'Requests awaiting your action', to: '/admin/requests?status=PENDING_HALL_ADMIN' }} />
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <StatCardItem card={{ label: 'Requests Today', value: n('todayTotal'), icon: <FileText className="w-4 h-4 text-white" />, gradient: 'linear-gradient(135deg,#4f46e5,#7c3aed)', iconBg: 'rgba(255,255,255,0.2)', to: '/admin/requests?status=PENDING_HALL_ADMIN', sub: 'New pending requests today' }} />
+              <StatCardItem card={{ label: 'Pending Your Review', value: n('pendingHallAdmin'), icon: <Clock className="w-4 h-4 text-white" />, gradient: 'linear-gradient(135deg,#d97706,#f59e0b)', iconBg: 'rgba(255,255,255,0.2)', to: '/admin/requests?status=PENDING_HALL_ADMIN', sub: 'Awaiting your action' }} />
+              <StatCardItem card={{ label: 'Awaiting Dean', value: n('pendingDean'), icon: <Users className="w-4 h-4 text-white" />, gradient: 'linear-gradient(135deg,#0891b2,#06b6d4)', iconBg: 'rgba(255,255,255,0.2)', to: '/admin/requests?status=APPROVED_BY_HALL_ADMIN', sub: 'Approved by you · pending dean' }} />
             </div>
-            <Link to="/admin/requests" className="flex items-center justify-between bg-blue-600 hover:bg-blue-700 text-white rounded-2xl p-5 transition-colors shadow-sm shadow-blue-200 group">
-              <div><p className="font-semibold">Review Pending Requests</p><p className="text-blue-200 text-sm mt-0.5">{n('pendingHallAdmin')} request(s) pending your review</p></div>
-              <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+            <Link to="/admin/requests" className="flex items-center justify-between rounded-2xl p-5 group" style={{ background: 'linear-gradient(135deg,#7c3aed,#ec4899)', textDecoration: 'none' }}>
+              <div>
+                <p className="font-medium text-white text-sm">Review Pending Requests</p>
+                <p className="text-xs mt-0.5" style={{ color: 'rgba(255,255,255,0.65)' }}>{n('pendingHallAdmin')} request(s) pending your review</p>
+              </div>
+              <ArrowRight className="w-5 h-5 text-white group-hover:translate-x-1 transition-transform" />
             </Link>
           </>
         )}
 
-        {/* Dean */}
+        {/* ── DEAN ── */}
         {role === 'dean' && (
           <>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <StatCardItem card={{ label: 'Requests Today', value: n('todayTotal'), icon: <FileText className="w-5 h-5 text-blue-600" />, color: 'text-blue-600', bg: 'bg-blue-50', sub: 'Requests awaiting your approval', to: '/admin/requests?status=APPROVED_BY_HALL_ADMIN' }} />
-              <StatCardItem card={{ label: 'Pending Your Approval', value: n('pendingDean'), icon: <Clock className="w-5 h-5 text-amber-600" />, color: 'text-amber-600', bg: 'bg-amber-50', sub: 'Awaiting your final decision', to: '/admin/requests?status=APPROVED_BY_HALL_ADMIN' }} />
-              <StatCardItem card={{ label: 'Total Approved', value: n('totalApproved'), icon: <CheckCircle className="w-5 h-5 text-emerald-600" />, color: 'text-emerald-600', bg: 'bg-emerald-50', sub: 'All fully approved requests', to: '/admin/requests?status=APPROVED_FINAL' }} />
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <StatCardItem card={{ label: 'Requests Today', value: n('todayTotal'), icon: <FileText className="w-4 h-4 text-white" />, gradient: 'linear-gradient(135deg,#4f46e5,#7c3aed)', iconBg: 'rgba(255,255,255,0.2)', to: '/admin/requests?status=APPROVED_BY_HALL_ADMIN', sub: 'Requests awaiting your approval' }} />
+              <StatCardItem card={{ label: 'Pending Your Approval', value: n('pendingDean'), icon: <Clock className="w-4 h-4 text-white" />, gradient: 'linear-gradient(135deg,#d97706,#f59e0b)', iconBg: 'rgba(255,255,255,0.2)', to: '/admin/requests?status=APPROVED_BY_HALL_ADMIN', sub: 'Awaiting your final decision' }} />
+              <StatCardItem card={{ label: 'Total Approved', value: n('totalApproved'), icon: <CheckCircle className="w-4 h-4 text-white" />, gradient: 'linear-gradient(135deg,#059669,#10b981)', iconBg: 'rgba(255,255,255,0.2)', to: '/admin/requests?status=APPROVED_FINAL', sub: 'All fully approved requests' }} />
             </div>
-            <Link to="/admin/requests" className="flex items-center justify-between bg-blue-600 hover:bg-blue-700 text-white rounded-2xl p-5 transition-colors shadow-sm shadow-blue-200 group">
-              <div><p className="font-semibold">Review Pending Requests</p><p className="text-blue-200 text-sm mt-0.5">{n('pendingDean')} request(s) awaiting your final approval</p></div>
-              <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+            <Link to="/admin/requests" className="flex items-center justify-between rounded-2xl p-5 group" style={{ background: 'linear-gradient(135deg,#7c3aed,#ec4899)', textDecoration: 'none' }}>
+              <div>
+                <p className="font-medium text-white text-sm">Review Pending Requests</p>
+                <p className="text-xs mt-0.5" style={{ color: 'rgba(255,255,255,0.65)' }}>{n('pendingDean')} request(s) awaiting your final approval</p>
+              </div>
+              <ArrowRight className="w-5 h-5 text-white group-hover:translate-x-1 transition-transform" />
             </Link>
           </>
         )}
 
-        {/* Security */}
+        {/* ── SECURITY ── */}
         {role === 'security' && (
           <>
-            {/* Γ£à 4 columns ΓÇö added Checked In card */}
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-              <StatCardItem card={{ label: 'Total Requests', value: n('total'), icon: <FileText className="w-5 h-5 text-blue-600" />, color: 'text-blue-600', bg: 'bg-blue-50', sub: 'All requests in the system' }} />
-              <StatCardItem card={{ label: 'Ready for Check-Out', value: n('approvedFinal'), icon: <AlertCircle className="w-5 h-5 text-amber-600" />, color: 'text-amber-600', bg: 'bg-amber-50', sub: 'Approved, awaiting exit', to: '/security/requests?status=APPROVED_FINAL' }} />
-              <StatCardItem card={{ label: 'Currently Out', value: n('checkedOut'), icon: <Shield className="w-5 h-5 text-red-500" />, color: 'text-red-500', bg: 'bg-red-50', sub: 'Students outside campus', to: '/security/requests?status=CHECKED_OUT' }} />
-              {/* Γ£à New */}
-              <StatCardItem card={{ label: 'Checked In', value: n('checkedIn'), icon: <CheckCircle className="w-5 h-5 text-emerald-600" />, color: 'text-emerald-600', bg: 'bg-emerald-50', sub: 'Students returned', to: '/security/requests?status=CHECKED_IN' }} />
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+              <StatCardItem card={{ label: 'Total Requests', value: n('total'), icon: <FileText className="w-4 h-4 text-white" />, gradient: 'linear-gradient(135deg,#4f46e5,#7c3aed)', iconBg: 'rgba(255,255,255,0.2)', sub: 'All requests in system' }} />
+              <StatCardItem card={{ label: 'Ready for Check-Out', value: n('approvedFinal'), icon: <AlertCircle className="w-4 h-4 text-white" />, gradient: 'linear-gradient(135deg,#d97706,#f59e0b)', iconBg: 'rgba(255,255,255,0.2)', to: '/security/requests?status=APPROVED_FINAL', sub: 'Approved, awaiting exit' }} />
+              <StatCardItem card={{ label: 'Currently Out', value: n('checkedOut'), icon: <Shield className="w-4 h-4 text-white" />, gradient: 'linear-gradient(135deg,#dc2626,#f43f5e)', iconBg: 'rgba(255,255,255,0.2)', to: '/security/requests?status=CHECKED_OUT', sub: 'Students outside campus' }} />
+              <StatCardItem card={{ label: 'Checked In', value: n('checkedIn'), icon: <CheckCircle className="w-4 h-4 text-white" />, gradient: 'linear-gradient(135deg,#059669,#10b981)', iconBg: 'rgba(255,255,255,0.2)', to: '/security/requests?status=CHECKED_IN', sub: 'Students returned' }} />
             </div>
-            <Link to="/security/requests" className="flex items-center justify-between bg-blue-600 hover:bg-blue-700 text-white rounded-2xl p-5 transition-colors shadow-sm shadow-blue-200 group">
-              <div><p className="font-semibold">Security Desk</p><p className="text-blue-200 text-sm mt-0.5">Process check-ins and check-outs</p></div>
-              <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+            <Link to="/security/requests" className="flex items-center justify-between rounded-2xl p-5 group" style={{ background: 'linear-gradient(135deg,#7c3aed,#ec4899)', textDecoration: 'none' }}>
+              <div>
+                <p className="font-medium text-white text-sm">Security Desk</p>
+                <p className="text-xs mt-0.5" style={{ color: 'rgba(255,255,255,0.65)' }}>Process check-ins and check-outs</p>
+              </div>
+              <ArrowRight className="w-5 h-5 text-white group-hover:translate-x-1 transition-transform" />
             </Link>
           </>
-          
         )}
-        
 
       </div>
     </DashboardLayout>
