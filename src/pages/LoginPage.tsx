@@ -193,8 +193,17 @@ export function LoginPage() {
       </div>
 
       <style>{`
-        input::placeholder { color: rgba(255,255,255,0.4); }
-        input:focus { border-color: #7c3aed !important; }
+        input { background: rgba(255,255,255,0.08) !important; color: #ffffff !important; }
+        input::placeholder { color: rgba(255,255,255,0.4) !important; }
+        input:focus { border-color: #7c3aed !important; outline: none !important; }
+        input:-webkit-autofill,
+        input:-webkit-autofill:hover,
+        input:-webkit-autofill:focus {
+          -webkit-box-shadow: 0 0 0px 1000px rgba(30,20,60,0.95) inset !important;
+          -webkit-text-fill-color: #ffffff !important;
+          border-color: rgba(255,255,255,0.15) !important;
+          caret-color: #ffffff !important;
+        }
       `}</style>
     </div>
   );
