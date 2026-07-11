@@ -138,19 +138,19 @@ export function SignUpPage() {
                 value={fullName}
                 onChange={e => setFullName(e.target.value)}
                 placeholder="Adisa Divine"
-                className="w-full px-4 py-3 rounded-xl bg-white/7 border border-white/10 text-white text-sm placeholder-white/30 outline-none focus:border-purple-500 transition-colors"
+                className="w-full px-4 py-3 rounded-xl bg-white/10 border border-white/20 text-white text-sm placeholder-white/45 outline-none focus:border-purple-500 transition-colors"
               />
             </div>
 
-            {/* Crawford ID */}
+            {/* Crawford Number */}
             <div className="flex flex-col gap-1.5">
-              <label className="text-xs text-white/50 tracking-wide">Crawford ID</label>
+              <label className="text-xs text-white/50 tracking-wide">Crawford number</label>
               <input
                 type="text"
                 value={crawfordNumber}
                 onChange={e => setCrawfordNumber(e.target.value)}
                 placeholder="e.g. 220502012"
-                className="w-full px-4 py-3 rounded-xl bg-white/7 border border-white/10 text-white text-sm placeholder-white/30 outline-none focus:border-purple-500 transition-colors"
+                className="w-full px-4 py-3 rounded-xl bg-white/10 border border-white/20 text-white text-sm placeholder-white/45 outline-none focus:border-purple-500 transition-colors"
               />
             </div>
 
@@ -164,7 +164,7 @@ export function SignUpPage() {
                     value={password}
                     onChange={e => setPassword(e.target.value)}
                     placeholder="Min 6 chars"
-                    className="w-full px-4 py-3 rounded-xl bg-white/7 border border-white/10 text-white text-sm placeholder-white/30 outline-none focus:border-purple-500 transition-colors pr-9"
+                    className="w-full px-4 py-3 rounded-xl bg-white/10 border border-white/20 text-white text-sm placeholder-white/45 outline-none focus:border-purple-500 transition-colors pr-9"
                   />
                   <button
                     type="button"
@@ -182,7 +182,7 @@ export function SignUpPage() {
                   value={confirmPassword}
                   onChange={e => setConfirmPassword(e.target.value)}
                   placeholder="Re-enter"
-                  className="w-full px-4 py-3 rounded-xl bg-white/7 border border-white/10 text-white text-sm placeholder-white/30 outline-none focus:border-purple-500 transition-colors"
+                  className="w-full px-4 py-3 rounded-xl bg-white/10 border border-white/20 text-white text-sm placeholder-white/45 outline-none focus:border-purple-500 transition-colors"
                 />
               </div>
             </div>

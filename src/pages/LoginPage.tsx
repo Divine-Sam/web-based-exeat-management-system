@@ -119,16 +119,16 @@ export function LoginPage() {
         {/* Card */}
         <div className="w-full bg-white/5 border border-white/10 rounded-2xl p-6 flex flex-col gap-4 backdrop-blur-sm">
           <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-            {/* Crawford ID */}
+            {/* Crawford Number */}
             <div className="flex flex-col gap-1.5">
-              <label className="text-xs text-white/50 tracking-wide">Crawford ID</label>
+              <label className="text-xs text-white/50 tracking-wide">Crawford number</label>
               <input
                 type="text"
                 value={crawfordNumber}
                 onChange={e => setCrawfordNumber(e.target.value)}
                 placeholder="e.g. 220502012"
                 autoComplete="username"
-                className="w-full px-4 py-3 rounded-xl bg-white/7 border border-white/10 text-white text-sm placeholder-white/30 outline-none focus:border-purple-500 transition-colors"
+                className="w-full px-4 py-3 rounded-xl bg-white/10 border border-white/20 text-white text-sm placeholder-white/45 outline-none focus:border-purple-500 transition-colors"
               />
             </div>
 
@@ -142,7 +142,7 @@ export function LoginPage() {
                   onChange={e => setPassword(e.target.value)}
                   placeholder="Enter your password"
                   autoComplete="current-password"
-                  className="w-full px-4 py-3 rounded-xl bg-white/7 border border-white/10 text-white text-sm placeholder-white/30 outline-none focus:border-purple-500 transition-colors pr-11"
+                  className="w-full px-4 py-3 rounded-xl bg-white/10 border border-white/20 text-white text-sm placeholder-white/45 outline-none focus:border-purple-500 transition-colors pr-11"
                 />
                 <button
                   type="button"
