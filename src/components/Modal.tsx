@@ -21,27 +21,52 @@ export function Modal({ isOpen, onClose, title, children, size = 'md' }: ModalPr
 
   if (!isOpen) return null;
 
-  const sizes = {
-    sm: 'max-w-sm',
-    md: 'max-w-lg',
-    lg: 'max-w-2xl',
-    xl: 'max-w-4xl',
+  const sizes: Record<string, string> = {
+    sm: '400px',
+    md: '560px',
+    lg: '720px',
+    xl: '900px',
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose} />
-      <div className={`relative bg-white rounded-2xl shadow-2xl w-full ${sizes[size]} max-h-[90vh] overflow-y-auto`}>
-        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100">
-          <h2 className="text-lg font-semibold text-slate-800">{title}</h2>
+    <div style={{ position: 'fixed', inset: 0, zIndex: 50, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px' }}>
+      {/* Backdrop */}
+      <div
+        onClick={onClose}
+        style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(4px)' }}
+      />
+
+      {/* Modal */}
+      <div style={{
+        position: 'relative',
+        width: '100%',
+        maxWidth: sizes[size],
+        maxHeight: '90vh',
+        overflowY: 'auto',
+        borderRadius: '20px',
+        background: '#13131f',
+        border: '1px solid rgba(255,255,255,0.1)',
+        boxShadow: '0 25px 60px rgba(0,0,0,0.6)',
+      }}>
+        {/* Header */}
+        <div style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          padding: '18px 24px', borderBottom: '1px solid rgba(255,255,255,0.07)',
+          position: 'sticky', top: 0, background: '#13131f', zIndex: 1,
+        }}>
+          <h2 style={{ fontSize: '15px', fontWeight: '500', color: '#fff' }}>{title}</h2>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"
+            style={{ padding: '6px', borderRadius: '8px', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.5)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
           >
-            <X className="w-5 h-5" />
+            <X className="w-4 h-4" />
           </button>
         </div>
-        <div className="px-6 py-5">{children}</div>
+
+        {/* Content */}
+        <div style={{ padding: '20px 24px' }}>
+          {children}
+        </div>
       </div>
     </div>
   );
