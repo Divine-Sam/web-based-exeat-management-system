@@ -3,24 +3,37 @@ import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
 import { useSearchParams } from 'react-router-dom';
 import { DashboardLayout } from '../../layouts/DashboardLayout';
-import { getAllRequests, checkOut, checkIn,} from '../../services/requestService';
+import { getAllRequests, checkOut, checkIn } from '../../services/requestService';
 import { ExeatRequest } from '../../types';
 import { StatusBadge } from '../../components/StatusBadge';
 import { LoadingSpinner } from '../../components/LoadingSpinner';
 import { Modal } from '../../components/Modal';
-import {
-  Search, Eye, LogOut, LogIn, FileText, ExternalLink,
-  Calendar, MapPin, User, Shield, Phone
-} from 'lucide-react';
+import { Search, Eye, LogOut, LogIn, FileText, ExternalLink, Calendar, MapPin, User, Shield, Phone } from 'lucide-react';
 
 type Tab = 'approved' | 'out' | 'in';
 
-// ✅ Map URL status param to tab key
 function statusToTab(status: string | null): Tab {
-  if (status === 'CHECKED_IN')    return 'in';
-  if (status === 'CHECKED_OUT')   return 'out';
+  if (status === 'CHECKED_IN')     return 'in';
+  if (status === 'CHECKED_OUT')    return 'out';
   if (status === 'APPROVED_FINAL') return 'approved';
   return 'approved';
+}
+
+const labelStyle: React.CSSProperties = {
+  fontSize: '11px', color: 'rgba(255,255,255,0.4)',
+  textTransform: 'uppercase', letterSpacing: '0.06em',
+  marginBottom: '4px', display: 'block',
+};
+
+function SecItem({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
+  return (
+    <div>
+      <span style={labelStyle}>{label}</span>
+      <p style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', color: 'rgba(255,255,255,0.8)', marginTop: '2px' }}>
+        <span style={{ color: 'rgba(255,255,255,0.3)' }}>{icon}</span>{value}
+      </p>
+    </div>
+  );
 }
 
 export function SecurityDeskPage() {
@@ -28,18 +41,15 @@ export function SecurityDeskPage() {
   const { showToast } = useToast();
   const [searchParams] = useSearchParams();
 
-  // ✅ Read ?status= from URL and set initial tab
-  const [tab, setTab] = useState<Tab>(statusToTab(searchParams.get('status')));
+  const [tab, setTab]         = useState<Tab>(statusToTab(searchParams.get('status')));
+  const [requests, setRequests] = useState<ExeatRequest[]>([]);
+  const [loading, setLoading]   = useState(true);
+  const [search, setSearch]     = useState('');
+  const [selected, setSelected] = useState<ExeatRequest | null>(null);
+  const [action, setAction]     = useState<'checkout' | 'checkin' | null>(null);
+  const [acting, setActing]     = useState(false);
+  const [docUrl, setDocUrl]     = useState<string | null>(null);
 
-  const [requests, setRequests]   = useState<ExeatRequest[]>([]);
-  const [loading, setLoading]     = useState(true);
-  const [search, setSearch]       = useState('');
-  const [selected, setSelected]   = useState<ExeatRequest | null>(null);
-  const [action, setAction]       = useState<'checkout' | 'checkin' | null>(null);
-  const [acting, setActing]       = useState(false);
-  const [docUrl, setDocUrl]       = useState<string | null>(null);
-
-  // ✅ Sync tab when URL param changes (e.g. dashboard card click)
   useEffect(() => {
     const status = searchParams.get('status');
     if (status) setTab(statusToTab(status));
@@ -50,7 +60,6 @@ export function SecurityDeskPage() {
   async function load() {
     setLoading(true);
     try {
-      // Fetch all statuses for security
       const [approved, out, checkedIn] = await Promise.all([
         getAllRequests({ status: 'APPROVED_FINAL' as any }),
         getAllRequests({ status: 'CHECKED_OUT' as any }),
@@ -64,11 +73,10 @@ export function SecurityDeskPage() {
     }
   }
 
-  // ✅ New
-function openRequest(req: ExeatRequest) {
-  setSelected(req);
-  setDocUrl(req.supporting_document_url ?? null);
-}
+  function openRequest(req: ExeatRequest) {
+    setSelected(req);
+    setDocUrl(req.supporting_document_url ?? null);
+  }
 
   async function handleAction() {
     if (!selected || !action) return;
@@ -77,14 +85,11 @@ function openRequest(req: ExeatRequest) {
       if (action === 'checkout') await checkOut(selected.id, user!.id);
       else await checkIn(selected.id, user!.id);
       showToast(`Student ${action === 'checkout' ? 'checked out' : 'checked in'} successfully.`, 'success');
-      setAction(null);
-      setSelected(null);
-      load();
+      setAction(null); setSelected(null); load();
     } catch (err: unknown) {
       showToast(err instanceof Error ? err.message : 'Action failed.', 'error');
     } finally {
-      setActing(false);
-    }
+      setActing(false); }
   }
 
   const TAB_STATUS: Record<Tab, string[]> = {
@@ -112,85 +117,92 @@ function openRequest(req: ExeatRequest) {
 
   return (
     <DashboardLayout>
-      <div className="space-y-5">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-red-100 rounded-xl flex items-center justify-center">
-            <Shield className="w-5 h-5 text-red-600" />
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+
+        {/* Header */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <div style={{ width: '40px', height: '40px', borderRadius: '12px', background: 'rgba(239,68,68,0.15)', border: '1px solid rgba(239,68,68,0.25)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <Shield className="w-5 h-5" style={{ color: '#f87171' }} />
           </div>
           <div>
-            <h2 className="text-lg font-bold text-slate-800">Security Desk</h2>
-            <p className="text-sm text-slate-500">Manage student check-in and check-out</p>
+            <h2 style={{ fontSize: '16px', fontWeight: '500', color: '#fff' }}>Security Desk</h2>
+            <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.4)', marginTop: '2px' }}>Manage student check-in and check-out</p>
           </div>
         </div>
 
         {/* Tabs */}
-        <div className="flex gap-1 bg-slate-100 p-1 rounded-xl w-full sm:w-fit">
+        <div style={{ display: 'flex', gap: '6px', background: 'rgba(255,255,255,0.04)', padding: '4px', borderRadius: '14px', width: 'fit-content' }}>
           {tabs.map(t => (
             <button key={t.key} onClick={() => setTab(t.key)}
-              className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                tab === t.key ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-500 hover:text-slate-700'
-              }`}
-            >
+              style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 16px', borderRadius: '10px', fontSize: '13px', fontWeight: '500', cursor: 'pointer', border: 'none', transition: 'all 0.2s',
+                background: tab === t.key ? 'rgba(255,255,255,0.1)' : 'transparent',
+                color: tab === t.key ? '#fff' : 'rgba(255,255,255,0.4)',
+              }}>
               {t.label}
-              <span className={`text-xs px-1.5 py-0.5 rounded-full font-semibold ${
-                tab === t.key ? 'bg-blue-100 text-blue-700' : 'bg-slate-200 text-slate-500'
-              }`}>{t.count}</span>
+              <span style={{ fontSize: '11px', fontWeight: '600', padding: '1px 7px', borderRadius: '99px',
+                background: tab === t.key ? 'linear-gradient(135deg,#7c3aed,#ec4899)' : 'rgba(255,255,255,0.08)',
+                color: tab === t.key ? '#fff' : 'rgba(255,255,255,0.4)',
+              }}>{t.count}</span>
             </button>
           ))}
         </div>
 
-        <div className="relative">
-          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+        {/* Search */}
+        <div style={{ position: 'relative' }}>
+          <Search className="w-4 h-4" style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', color: 'rgba(255,255,255,0.3)' }} />
           <input type="text" value={search} onChange={e => setSearch(e.target.value)}
-            placeholder="Search by name, Crawford ID"
-            className="w-full pl-10 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
+            placeholder="Search by name, Crawford ID..."
+            style={{ width: '100%', padding: '11px 16px 11px 40px', borderRadius: '12px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', fontSize: '13px', outline: 'none' }} />
         </div>
 
+        {/* List */}
         {loading ? (
-          <div className="flex justify-center py-20"><LoadingSpinner size="lg" /></div>
+          <div style={{ display: 'flex', justifyContent: 'center', padding: '80px 0' }}><LoadingSpinner size="lg" /></div>
         ) : filtered.length === 0 ? (
-          <div className="bg-white rounded-2xl border border-slate-100 p-12 text-center">
-            <Shield className="w-12 h-12 text-slate-200 mx-auto mb-3" />
-            <p className="text-slate-500">No requests in this category</p>
+          <div style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '16px', padding: '60px 24px', textAlign: 'center' }}>
+            <Shield className="w-12 h-12 mx-auto mb-3" style={{ color: 'rgba(255,255,255,0.1)' }} />
+            <p style={{ fontSize: '14px', color: 'rgba(255,255,255,0.4)' }}>No requests in this category</p>
           </div>
         ) : (
-          <div className="space-y-3">
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
             {filtered.map(req => (
-              <div key={req.id} className="bg-white rounded-2xl border border-slate-100 shadow-sm p-5 hover:shadow-md transition-shadow">
-                <div className="flex items-start justify-between gap-3">
-                  <div className="flex-1 min-w-0">
-                    <div className="flex flex-wrap items-center gap-2 mb-2">
-                      <p className="font-semibold text-slate-800">{req.profiles?.full_name ?? '—'}</p>
-                      <span className="text-xs text-slate-400 bg-slate-100 px-2 py-0.5 rounded-full">{req.profiles?.crawford_number}</span>
-                      <StatusBadge status={req.status} />
-                    </div>
-                    <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-slate-600">
-                      <span className="flex items-center gap-1"><MapPin className="w-3.5 h-3.5 text-slate-400" />{req.destination}</span>
-                      <span className="flex items-center gap-1"><Calendar className="w-3.5 h-3.5 text-slate-400" />
-                        {new Date(req.departure_date).toLocaleDateString()} — {new Date(req.return_date).toLocaleDateString()}
-                      </span>
-                    </div>
-                    {req.checkout_time && <p className="text-xs text-slate-400 mt-1">Checked out: {new Date(req.checkout_time).toLocaleString()}</p>}
-                    {req.checkin_time  && <p className="text-xs text-slate-400 mt-1">Checked in: {new Date(req.checkin_time).toLocaleString()}</p>}
+              <div key={req.id}
+                style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '14px', padding: '16px', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '12px' }}>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+                    <p style={{ fontSize: '14px', fontWeight: '500', color: '#fff' }}>{req.profiles?.full_name ?? '—'}</p>
+                    <span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.4)', background: 'rgba(255,255,255,0.07)', padding: '2px 8px', borderRadius: '99px' }}>{req.profiles?.crawford_number}</span>
+                    <StatusBadge status={req.status} />
                   </div>
-                  <div className="flex items-center gap-2 flex-shrink-0">
-                    <button onClick={() => openRequest(req)}
-                      className="p-2 rounded-xl text-slate-500 hover:bg-slate-100 hover:text-blue-600 transition-colors" title="View">
-                      <Eye className="w-4 h-4" />
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', fontSize: '13px', color: 'rgba(255,255,255,0.5)' }}>
+                    <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                      <MapPin className="w-3.5 h-3.5" style={{ color: 'rgba(255,255,255,0.3)' }} />{req.destination}
+                    </span>
+                    <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                      <Calendar className="w-3.5 h-3.5" style={{ color: 'rgba(255,255,255,0.3)' }} />
+                      {new Date(req.departure_date).toLocaleDateString()} — {new Date(req.return_date).toLocaleDateString()}
+                    </span>
+                  </div>
+                  {req.checkout_time && <p style={{ fontSize: '11px', color: 'rgba(255,255,255,0.25)', marginTop: '6px' }}>Checked out: {new Date(req.checkout_time).toLocaleString()}</p>}
+                  {req.checkin_time  && <p style={{ fontSize: '11px', color: 'rgba(255,255,255,0.25)', marginTop: '6px' }}>Checked in: {new Date(req.checkin_time).toLocaleString()}</p>}
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
+                  <button onClick={() => openRequest(req)} title="View"
+                    style={{ padding: '7px', borderRadius: '10px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.5)', cursor: 'pointer' }}>
+                    <Eye className="w-4 h-4" />
+                  </button>
+                  {req.status === 'APPROVED_FINAL' && (
+                    <button onClick={() => { openRequest(req); setAction('checkout'); }}
+                      style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 14px', borderRadius: '10px', background: 'linear-gradient(135deg,#d97706,#f59e0b)', border: 'none', color: '#fff', fontSize: '13px', fontWeight: '500', cursor: 'pointer' }}>
+                      <LogOut className="w-4 h-4" /> Check Out
                     </button>
-                    {req.status === 'APPROVED_FINAL' && (
-                      <button onClick={() => { openRequest(req); setAction('checkout'); }}
-                        className="flex items-center gap-1.5 px-3 py-2 bg-amber-600 hover:bg-amber-700 text-white text-sm font-medium rounded-xl transition-colors">
-                        <LogOut className="w-4 h-4" /> Check Out
-                      </button>
-                    )}
-                    {req.status === 'CHECKED_OUT' && (
-                      <button onClick={() => { openRequest(req); setAction('checkin'); }}
-                        className="flex items-center gap-1.5 px-3 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium rounded-xl transition-colors">
-                        <LogIn className="w-4 h-4" /> Check In
-                      </button>
-                    )}
-                  </div>
+                  )}
+                  {req.status === 'CHECKED_OUT' && (
+                    <button onClick={() => { openRequest(req); setAction('checkin'); }}
+                      style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 14px', borderRadius: '10px', background: 'linear-gradient(135deg,#059669,#10b981)', border: 'none', color: '#fff', fontSize: '13px', fontWeight: '500', cursor: 'pointer' }}>
+                      <LogIn className="w-4 h-4" /> Check In
+                    </button>
+                  )}
                 </div>
               </div>
             ))}
@@ -201,9 +213,11 @@ function openRequest(req: ExeatRequest) {
       {/* Detail Modal */}
       <Modal isOpen={!!selected && !action} onClose={() => { setSelected(null); setDocUrl(null); }} title="Exeat Details" size="lg">
         {selected && (
-          <div className="space-y-4">
-            <div className="flex items-center gap-2"><StatusBadge status={selected.status} /></div>
-            <div className="grid grid-cols-2 gap-4">
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <StatusBadge status={selected.status} />
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
               <SecItem icon={<User className="w-4 h-4" />}     label="Student"     value={selected.profiles?.full_name ?? '—'} />
               <SecItem icon={<User className="w-4 h-4" />}     label="Crawford No" value={selected.profiles?.crawford_number ?? '—'} />
               <SecItem icon={<MapPin className="w-4 h-4" />}   label="Destination" value={selected.destination} />
@@ -212,11 +226,10 @@ function openRequest(req: ExeatRequest) {
               <SecItem icon={<Calendar className="w-4 h-4" />} label="Return"      value={new Date(selected.return_date).toLocaleDateString(undefined, { dateStyle: 'long' })} />
             </div>
 
-            {/* ✅ Parent contact */}
             {(selected.parent_name || selected.parent_phone || selected.parent_relationship) && (
-              <div className="bg-blue-50 border border-blue-100 rounded-xl p-4">
-                <p className="text-xs font-semibold text-blue-600 uppercase tracking-wide mb-3">Parent / Guardian Contact</p>
-                <div className="grid grid-cols-2 gap-3">
+              <div style={{ background: 'rgba(124,58,237,0.08)', border: '1px solid rgba(124,58,237,0.2)', borderRadius: '12px', padding: '14px' }}>
+                <p style={{ fontSize: '11px', fontWeight: '600', color: '#a78bfa', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '12px' }}>Parent / Guardian Contact</p>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                   {selected.parent_name         && <SecItem icon={<User className="w-4 h-4" />}  label="Name"         value={selected.parent_name} />}
                   {selected.parent_relationship  && <SecItem icon={<User className="w-4 h-4" />}  label="Relationship" value={selected.parent_relationship} />}
                   {selected.parent_phone         && <SecItem icon={<Phone className="w-4 h-4" />} label="Phone"        value={selected.parent_phone} />}
@@ -226,21 +239,22 @@ function openRequest(req: ExeatRequest) {
 
             {docUrl && (
               <a href={docUrl} target="_blank" rel="noopener noreferrer"
-                className="flex items-center gap-2 px-4 py-3 bg-blue-50 border border-blue-100 rounded-xl text-blue-600 hover:bg-blue-100 transition-colors text-sm font-medium">
+                style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '11px 14px', background: 'rgba(124,58,237,0.1)', border: '1px solid rgba(124,58,237,0.2)', borderRadius: '12px', color: '#c4b5fd', fontSize: '13px', fontWeight: '500', textDecoration: 'none' }}>
                 <FileText className="w-4 h-4" />
                 {selected.supporting_document_name ?? 'View Document'}
-                <ExternalLink className="w-3.5 h-3.5 ml-auto" />
+                <ExternalLink className="w-3.5 h-3.5" style={{ marginLeft: 'auto' }} />
               </a>
             )}
+
             {selected.status === 'APPROVED_FINAL' && (
               <button onClick={() => setAction('checkout')}
-                className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-medium transition-colors">
+                style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', padding: '12px', borderRadius: '12px', background: 'linear-gradient(135deg,#d97706,#f59e0b)', border: 'none', color: '#fff', fontSize: '14px', fontWeight: '500', cursor: 'pointer' }}>
                 <LogOut className="w-4 h-4" /> Check Out Student
               </button>
             )}
             {selected.status === 'CHECKED_OUT' && (
               <button onClick={() => setAction('checkin')}
-                className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-medium transition-colors">
+                style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', padding: '12px', borderRadius: '12px', background: 'linear-gradient(135deg,#059669,#10b981)', border: 'none', color: '#fff', fontSize: '14px', fontWeight: '500', cursor: 'pointer' }}>
                 <LogIn className="w-4 h-4" /> Check In Student
               </button>
             )}
@@ -248,41 +262,34 @@ function openRequest(req: ExeatRequest) {
         )}
       </Modal>
 
-      {/* Confirm Action Modal */}
+      {/* Confirm Modal */}
       <Modal isOpen={!!selected && !!action} onClose={() => setAction(null)}
         title={action === 'checkout' ? 'Confirm Check-Out' : 'Confirm Check-In'} size="sm">
-        <div className="space-y-4">
-          <p className="text-sm text-slate-600">
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+          <p style={{ fontSize: '13px', color: 'rgba(255,255,255,0.5)' }}>
             {action === 'checkout'
               ? `Confirm that ${selected?.profiles?.full_name ?? 'this student'} is leaving campus.`
               : `Confirm that ${selected?.profiles?.full_name ?? 'this student'} has returned to campus.`}
           </p>
-          <div className="flex gap-3">
+          <div style={{ display: 'flex', gap: '10px' }}>
             <button onClick={() => setAction(null)}
-              className="flex-1 py-2.5 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 font-medium transition-colors text-sm">
+              style={{ flex: 1, padding: '11px', borderRadius: '12px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.6)', fontSize: '13px', fontWeight: '500', cursor: 'pointer' }}>
               Cancel
             </button>
             <button onClick={handleAction} disabled={acting}
-              className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-white font-medium text-sm transition-colors disabled:opacity-50 ${action === 'checkout' ? 'bg-amber-600 hover:bg-amber-700' : 'bg-emerald-600 hover:bg-emerald-700'}`}>
+              style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', padding: '11px', borderRadius: '12px', border: 'none', color: '#fff', fontSize: '13px', fontWeight: '500', cursor: acting ? 'not-allowed' : 'pointer', opacity: acting ? 0.7 : 1,
+                background: action === 'checkout' ? 'linear-gradient(135deg,#d97706,#f59e0b)' : 'linear-gradient(135deg,#059669,#10b981)' }}>
               {acting ? <LoadingSpinner size="sm" /> : action === 'checkout' ? <LogOut className="w-4 h-4" /> : <LogIn className="w-4 h-4" />}
               {acting ? 'Processing...' : action === 'checkout' ? 'Confirm Check-Out' : 'Confirm Check-In'}
             </button>
           </div>
         </div>
       </Modal>
+
+      <style>{`
+        input::placeholder { color: rgba(255,255,255,0.3); }
+        input:focus { border-color: #7c3aed !important; }
+      `}</style>
     </DashboardLayout>
   );
 }
-
-function SecItem({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
-  return (
-    <div>
-      <p className="text-xs font-medium text-slate-400 uppercase tracking-wide">{label}</p>
-      <p className="mt-0.5 flex items-center gap-1.5 text-sm text-slate-700">
-        <span className="text-slate-400">{icon}</span>
-        {value}
-      </p>
-    </div>
-  );
-}
-
